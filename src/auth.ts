@@ -4,6 +4,7 @@ import { HttpError, clientIp } from "./http";
 import { hashPin, verifyPin, randomToken, sha256Hex, signJwt, verifyJwt, type JwtClaims } from "./crypto";
 import { audit } from "./db";
 import { sendOdooMail, type MailResult } from "./mail";
+import { findOdooAccount, SIGNUP_REQUIRED_MESSAGE, PIN_NOT_SET_MESSAGE, type OdooAccount } from "./onboarding";
 
 export const SESSION_COOKIE = "pj_session";
 const PIN_MAX_FAILS = 5;
@@ -192,11 +193,45 @@ export function baseUrl(env: Env, req: Request): string {
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+function magicLinkHtml(name: string | null, link: string, ttl: number, firstTime: boolean): string {
+  const hi = name ? esc(name) : "there";
+  const lead = firstTime
+    ? "Welcome! This link signs you in to the Patron Journey organizer dashboard for the first time and sets up your organizer account."
+    : "Use this link to sign in to the Patron Journey organizer dashboard.";
+  return `<div style="font-family:system-ui,sans-serif;font-size:15px;color:#1d1d1f">
+<p>Hi ${hi},</p>
+<p>${lead} It works once and expires in ${ttl} minutes.</p>
+<p><a href="${esc(link)}" style="display:inline-block;padding:10px 18px;background:#6b3fa0;color:#fff;border-radius:6px;text-decoration:none">Sign in to the dashboard</a></p>
+<p style="font-size:13px;color:#666">If the button does not work, paste this into your browser:<br>${esc(link)}</p>
+${firstTime ? '<p style="font-size:13px;color:#666">After signing in you can set a PIN for faster sign-in next time.</p>' : ""}
+<p style="font-size:13px;color:#666">If you did not ask to sign in, ignore this email.</p></div>`;
+}
+
+/** One-time link for a pjrny.com user who is not an organizer yet. The organizer row is created only when it is verified. */
+export async function issueSignupToken(env: Env, email: string, acct: OdooAccount): Promise<string> {
+  const token = randomToken(32);
+  const ttl = Number(env.MAGIC_LINK_TTL_MINUTES || 15);
+  await env.DB.prepare(
+    `INSERT INTO signup_links (token_hash, email, odoo_user_id, odoo_partner_id, display_name, website_id, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now', ?))`,
+  )
+    .bind(await sha256Hex(token), email, acct.user_id, acct.partner_id, acct.name, acct.website_id, `+${ttl} minutes`)
+    .run();
+  return token;
+}
+
 /**
- * Always resolves the same way for unknown emails (no account enumeration).
- * Returns the mail result internally so the caller can audit it.
+ * Magic-link request.
+ * - existing active organizer: email a sign-in link.
+ * - not an organizer yet but has an Odoo (pjrny.com) user account: email a one-time onboarding link; the
+ *   organizer row is created when it is verified (consumeMagicLink).
+ * - no Odoo account: 404 signup_required with instructions to sign up on pjrny.com first.
  */
-export async function requestMagicLink(env: Env, req: Request, emailRaw: unknown): Promise<{ mail?: MailResult; known: boolean; throttled?: boolean }> {
+export async function requestMagicLink(
+  env: Env,
+  req: Request,
+  emailRaw: unknown,
+): Promise<{ mail?: MailResult; known: boolean; first_time?: boolean; throttled?: boolean }> {
   const email = normalizeEmail(emailRaw);
   const ip = clientIp(req);
   const recent = await env.DB.prepare(
@@ -205,43 +240,98 @@ export async function requestMagicLink(env: Env, req: Request, emailRaw: unknown
     .bind(email)
     .first<{ n: number }>();
   if ((recent?.n ?? 0) >= MAGIC_MAX_REQUESTS) return { known: false, throttled: true };
-  const org = await getOrganizerByEmail(env, email);
-  await recordAttempt(env, email, "magic_request", ip, !!org?.active);
-  if (!org || !org.active) return { known: false };
-
-  const token = await issueMagicToken(env, org.id);
-  const link = `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}`;
   const ttl = Number(env.MAGIC_LINK_TTL_MINUTES || 15);
-  const name = org.display_name ? esc(org.display_name) : "there";
-  const mail = await sendOdooMail(env, {
-    to: org.email,
-    subject: "Your Patron Journey organizer sign-in link",
-    html: `<div style="font-family:system-ui,sans-serif;font-size:15px;color:#1d1d1f">
-<p>Hi ${name},</p>
-<p>Use this link to sign in to the Patron Journey organizer dashboard. It works once and expires in ${ttl} minutes.</p>
-<p><a href="${esc(link)}" style="display:inline-block;padding:10px 18px;background:#6b3fa0;color:#fff;border-radius:6px;text-decoration:none">Sign in to the dashboard</a></p>
-<p style="font-size:13px;color:#666">If the button does not work, paste this into your browser:<br>${esc(link)}</p>
-<p style="font-size:13px;color:#666">If you did not ask to sign in, ignore this email.</p></div>`,
+  const org = await getOrganizerByEmail(env, email);
+
+  if (org) {
+    await recordAttempt(env, email, "magic_request", ip, !!org.active);
+    if (!org.active) throw new HttpError(403, "This organizer account is disabled. Contact Patron Journey for help.", "inactive");
+    const token = await issueMagicToken(env, org.id);
+    const link = `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}`;
+    const mail = await sendOdooMail(env, { to: org.email, subject: "Your Patron Journey organizer sign-in link", html: magicLinkHtml(org.display_name, link, ttl, false) });
+    await audit(env, { organizerId: org.id, action: "auth.magic_link_sent", odooModel: "mail.mail", odooId: mail.mail_id ?? undefined, detail: { mail_status: mail.status, mail_detail: mail.detail }, ip });
+    return { known: true, mail };
+  }
+
+  const acct = await findOdooAccount(env, email);
+  await recordAttempt(env, email, "magic_request", ip, !!acct);
+  if (!acct) {
+    await audit(env, { action: "auth.signup_required", detail: { email, method: "magic_request" }, ip });
+    throw new HttpError(404, SIGNUP_REQUIRED_MESSAGE, "signup_required");
+  }
+  const token = await issueSignupToken(env, email, acct);
+  const link = `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}`;
+  const mail = await sendOdooMail(env, { to: email, subject: "Your Patron Journey organizer sign-in link", html: magicLinkHtml(acct.name, link, ttl, true) });
+  await audit(env, {
+    action: "auth.signup_link_sent", odooModel: "mail.mail", odooId: mail.mail_id ?? undefined,
+    detail: { email, odoo_user_id: acct.user_id, odoo_partner_id: acct.partner_id, portal: acct.portal, website_id: acct.website_id, company_id: acct.company_id, pjrny: acct.pjrny, mail_status: mail.status, mail_detail: mail.detail }, ip,
   });
-  await audit(env, { organizerId: org.id, action: "auth.magic_link_sent", odooModel: "mail.mail", odooId: mail.mail_id ?? undefined, detail: { mail_status: mail.status, mail_detail: mail.detail }, ip });
-  return { known: true, mail };
+  return { known: true, first_time: true, mail };
+}
+
+/**
+ * Inserts the organizer for a verified onboarding link. Never reactivates a disabled organizer.
+ * Re-checks Odoo so an account archived after the link was sent cannot be onboarded.
+ */
+async function autoCreateOrganizer(env: Env, req: Request, link: { email: string; odoo_user_id: number; odoo_partner_id: number | null; display_name: string | null; website_id: number | null }): Promise<Organizer> {
+  const existing = await getOrganizerByEmail(env, link.email);
+  if (existing) {
+    if (!existing.active) throw new HttpError(401, "Account is not active", "inactive");
+    return existing;
+  }
+  const acct = await findOdooAccount(env, link.email);
+  if (!acct) throw new HttpError(403, SIGNUP_REQUIRED_MESSAGE, "signup_required");
+  const inserted = await env.DB.prepare(
+    `INSERT INTO organizers (email, odoo_partner_id, odoo_user_id, display_name, role, active)
+     VALUES (?, ?, ?, ?, 'organizer', 1)
+     ON CONFLICT(email) DO NOTHING
+     RETURNING id`,
+  )
+    .bind(link.email, acct.partner_id ?? link.odoo_partner_id, acct.user_id, acct.name ?? link.display_name)
+    .first<{ id: number }>();
+  const org = (await getOrganizerByEmail(env, link.email))!;
+  if (inserted) {
+    await audit(env, {
+      organizerId: org.id, action: "organizer.auto_created", odooModel: "res.users", odooId: acct.user_id,
+      detail: { email: org.email, odoo_partner_id: org.odoo_partner_id, odoo_user_id: acct.user_id, portal: acct.portal, website_id: acct.website_id, company_id: acct.company_id, pjrny: acct.pjrny, match: acct.match, via: "magic_link" },
+      ip: clientIp(req),
+    });
+  }
+  if (!org.active) throw new HttpError(401, "Account is not active", "inactive");
+  return org;
 }
 
 export async function consumeMagicLink(env: Env, req: Request, tokenRaw: unknown) {
   const token = typeof tokenRaw === "string" ? tokenRaw.trim() : "";
   if (!token || token.length > 200) throw new HttpError(400, "Missing sign-in token", "invalid_token");
+  const hash = await sha256Hex(token);
   const row = await env.DB.prepare(
     `UPDATE magic_links SET used_at = CURRENT_TIMESTAMP
      WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')
      RETURNING organizer_id`,
   )
-    .bind(await sha256Hex(token))
+    .bind(hash)
     .first<{ organizer_id: number }>();
-  if (!row) throw new HttpError(401, "This sign-in link is invalid, expired, or already used", "invalid_token");
-  const org = await getOrganizer(env, row.organizer_id);
+  let org: Organizer | null;
+  let firstTime = false;
+  if (row) {
+    org = await getOrganizer(env, row.organizer_id);
+  } else {
+    const su = await env.DB.prepare(
+      `UPDATE signup_links SET used_at = CURRENT_TIMESTAMP
+       WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')
+       RETURNING email, odoo_user_id, odoo_partner_id, display_name, website_id`,
+    )
+      .bind(hash)
+      .first<{ email: string; odoo_user_id: number; odoo_partner_id: number | null; display_name: string | null; website_id: number | null }>();
+    if (!su) throw new HttpError(401, "This sign-in link is invalid, expired, or already used", "invalid_token");
+    const before = await getOrganizerByEmail(env, su.email);
+    org = await autoCreateOrganizer(env, req, su);
+    firstTime = !before;
+  }
   if (!org || !org.active) throw new HttpError(401, "Account is not active", "inactive");
   await recordAttempt(env, org.email, "magic_link", clientIp(req), true);
-  return { organizer: org, ...(await createSession(env, req, org, "magic_link")) };
+  return { organizer: org, first_time: firstTime, ...(await createSession(env, req, org, "magic_link")) };
 }
 
 // ---------- PIN ----------
@@ -255,6 +345,21 @@ export async function pinLogin(env: Env, req: Request, emailRaw: unknown, pinRaw
   }
   const pin = typeof pinRaw === "string" || typeof pinRaw === "number" ? String(pinRaw).trim() : "";
   const org = await getOrganizerByEmail(env, email);
+  // First-time organizers have no PIN yet: they must sign in once with an email link (which proves the
+  // mailbox and auto-creates the organizer), then set a PIN via POST /api/organizer/pin.
+  if (!org) {
+    const acct = await findOdooAccount(env, email);
+    await recordAttempt(env, email, "pin", ip, false);
+    if (!acct) {
+      await audit(env, { action: "auth.signup_required", detail: { email, method: "pin" }, ip });
+      throw new HttpError(404, SIGNUP_REQUIRED_MESSAGE, "signup_required");
+    }
+    throw new HttpError(409, PIN_NOT_SET_MESSAGE, "pin_not_set");
+  }
+  if (org.active && !org.pin_hash) {
+    await recordAttempt(env, email, "pin", ip, false);
+    throw new HttpError(409, PIN_NOT_SET_MESSAGE, "pin_not_set");
+  }
   const ok = !!(org && org.active && org.pin_hash && pin && (await verifyPin(pin, org.pin_hash, pepper)));
   await recordAttempt(env, email, "pin", ip, ok);
   if (!ok) {

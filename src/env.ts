@@ -20,6 +20,8 @@ export interface Env {
   PJ_SPONSOR_PARTNER_ID?: string;
   PJ_SPONSOR_TYPE_ID?: string;
   ODOO_TICKET_PRODUCT_ID?: string;
+  /** Website whose users are preferred when auto-creating organizers (2 = pjrny.com). */
+  ORGANIZER_SIGNUP_WEBSITE_ID?: string;
 
   // Secrets (Cloudflare dashboard / `wrangler secret put`). Never logged, never returned.
   ADMIN_TOKEN?: string;
@@ -49,6 +51,7 @@ export const PLAIN_VARS = new Set([
   "PJ_SPONSOR_TYPE_ID",
   "ODOO_TICKET_PRODUCT_ID",
   "PUBLIC_SITE_BY_WEBSITE",
+  "ORGANIZER_SIGNUP_WEBSITE_ID",
 ]);
 
 /** Lists the NAMES (never values) of string bindings that are not declared plain vars, i.e. secrets. */

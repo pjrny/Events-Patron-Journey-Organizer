@@ -9,14 +9,15 @@ import { resolveOdooKey, odoo, OdooError } from "./odoo";
 import { runReadProbe, runWriteProbe } from "./probe";
 import {
   requireOrganizer, authenticate, requestMagicLink, consumeMagicLink, pinLogin, sessionCookie, clearSessionCookie,
-  revokeSession, assertSameOriginPost, setOrganizerPin, upsertOrganizer, normalizeEmail, getOrganizerByEmail, issueMagicToken, baseUrl, validatePin,
+  revokeSession, assertSameOriginPost, setOrganizerPin, upsertOrganizer, normalizeEmail, getOrganizerByEmail, issueMagicToken, issueSignupToken, baseUrl, validatePin,
 } from "./auth";
+import { findOdooAccount, SIGNUP_REQUIRED_MESSAGE } from "./onboarding";
 import { createEvent, updateEvent, archiveEvent, publishEvent, listEvents, eventSummary, readEventBody } from "./events";
 import { requireOwnership } from "./db";
 import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "./dashboard";
 import { checkIn, listAttendees } from "./checkin";
 
-const VERSION = "0.3.1-embed";
+const VERSION = "0.4.0-autocreate";
 
 function requireAdmin(req: Request, env: Env): void {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN secret is not configured on this Worker", "admin_not_configured");
@@ -36,7 +37,7 @@ async function body(req: Request): Promise<any> {
 const publicOrganizer = (o: any) => o && { id: o.id, email: o.email, display_name: o.display_name, odoo_partner_id: o.odoo_partner_id, odoo_user_id: o.odoo_user_id, role: o.role, tier: o.tier, active: o.active, pin_set: !!o.pin_hash };
 
 const READONLY_METHODS = new Set(["search_read", "read", "search_count", "fields_get"]);
-const READONLY_MODELS = /^(event\.[a-z.]+|mail\.mail|mail\.message|website|res\.partner|res\.country(\.state)?|ir\.attachment)$/;
+const READONLY_MODELS = /^(event\.[a-z.]+|mail\.mail|mail\.message|website|res\.partner|res\.users|res\.country(\.state)?|ir\.attachment)$/;
 
 async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(req.url);
@@ -100,13 +101,20 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     if (method === "POST" && pathname === "/api/auth/magic-link") {
       const b = await body(req);
       const r = await requestMagicLink(env, req, b.email);
-      // Same answer for known/unknown emails (no enumeration). Delivery status is in the audit log.
-      return json({ ok: true, message: "If that email belongs to an organizer, a sign-in link has been sent.", ...(r.throttled ? { throttled: true } : {}) }, r.throttled ? 429 : 200);
+      // Emails with no pjrny.com (Odoo) account get 404 signup_required from requestMagicLink. Delivery status is in the audit log.
+      if (r.throttled) return json({ ok: false, error: "throttled", throttled: true, message: "Too many sign-in link requests. Wait 15 minutes and try again." }, 429);
+      return json({
+        ok: true,
+        first_time: !!r.first_time,
+        message: r.first_time
+          ? "We found your pjrny.com account. Check your email for a sign-in link to set up your organizer dashboard. It expires in 15 minutes."
+          : "Check your email for a sign-in link. It expires in 15 minutes.",
+      });
     }
     if (method === "POST" && pathname === "/api/auth/magic/verify") {
       const b = await body(req);
       const s = await consumeMagicLink(env, req, b.token);
-      return json({ ok: true, token: s.token, expires_at: s.expires_at, organizer: publicOrganizer(s.organizer) }, 200, { "set-cookie": sessionCookie(s.token, s.max_age) });
+      return json({ ok: true, token: s.token, expires_at: s.expires_at, first_time: s.first_time, organizer: publicOrganizer(s.organizer) }, 200, { "set-cookie": sessionCookie(s.token, s.max_age) });
     }
     if (method === "POST" && pathname === "/api/auth/pin") {
       const b = await body(req);
@@ -228,14 +236,32 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       return json({ ok: true, organizer: publicOrganizer(org), odoo_partner: p ? { id: p.id, name: p.name } : null });
     }
 
-    /** Test helper: mint a one-time magic link WITHOUT emailing it (lets the smoke test exercise /auth/magic). */
+    /**
+     * Test helper: mint a one-time magic link WITHOUT emailing it (lets the smoke test exercise /auth/magic).
+     * For an email that is not an organizer yet, mints the same onboarding link a pjrny.com user would get
+     * (organizer row is created only when it is verified); 404 signup_required if there is no Odoo account.
+     */
     if (method === "POST" && pathname === "/api/admin/organizers/magic-link") {
       const b = await body(req);
-      const org = await getOrganizerByEmail(env, normalizeEmail(b.email));
-      if (!org) throw new HttpError(404, "No such organizer", "not_found");
+      const email = normalizeEmail(b.email);
+      const org = await getOrganizerByEmail(env, email);
+      if (!org) {
+        const acct = await findOdooAccount(env, email);
+        if (!acct) throw new HttpError(404, SIGNUP_REQUIRED_MESSAGE, "signup_required");
+        const token = await issueSignupToken(env, email, acct);
+        await audit(env, { action: "admin.signup_link_minted", odooModel: "res.users", odooId: acct.user_id, detail: { email, odoo_partner_id: acct.partner_id, portal: acct.portal, website_id: acct.website_id }, ip: clientIp(req) });
+        return json({ ok: true, pending_signup: true, odoo_account: { user_id: acct.user_id, partner_id: acct.partner_id, portal: acct.portal, website_id: acct.website_id, company_id: acct.company_id, pjrny: acct.pjrny, match: acct.match }, token, link: `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}` });
+      }
       const token = await issueMagicToken(env, org.id);
       await audit(env, { organizerId: org.id, action: "admin.magic_link_minted", ip: clientIp(req) });
       return json({ ok: true, token, link: `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}` });
+    }
+
+    /** Look up which Odoo account (if any) an email would be auto-created from. Read-only. */
+    if (method === "GET" && pathname === "/api/admin/odoo-account") {
+      const email = normalizeEmail(url.searchParams.get("email"));
+      const org = await getOrganizerByEmail(env, email);
+      return json({ ok: true, email, organizer: publicOrganizer(org), odoo_account: await findOdooAccount(env, email) });
     }
 
     if (method === "GET" && pathname === "/api/admin/audit") {

@@ -1,11 +1,14 @@
 import type { Env } from "./env";
 import { HttpError } from "./http";
-import schemaSql from "../migrations/0001_init.sql";
+import schema0001 from "../migrations/0001_init.sql";
+import schema0002 from "../migrations/0002_signup_links.sql";
+
+const schemaSql = [schema0001, schema0002].join("\n;\n");
 
 let schemaReady = false;
 
 /**
- * Idempotently applies migrations/0001_init.sql (all statements are CREATE ... IF NOT EXISTS).
+ * Idempotently applies migrations/0001_init.sql + 0002_signup_links.sql (all statements are CREATE ... IF NOT EXISTS).
  * Lets the Worker self-bootstrap D1 even when deployed from the dashboard/Git integration,
  * where `wrangler d1 migrations apply --remote` may not be available.
  */
@@ -23,7 +26,7 @@ export async function ensureSchema(env: Env): Promise<void> {
 }
 
 export async function tableCounts(env: Env): Promise<Record<string, number>> {
-  const tables = ["organizers", "organizer_events", "sessions", "magic_links", "login_attempts", "audit_logs"];
+  const tables = ["organizers", "organizer_events", "sessions", "magic_links", "signup_links", "login_attempts", "audit_logs"];
   const out: Record<string, number> = {};
   for (const t of tables) {
     const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first<{ n: number }>();

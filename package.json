@@ -12,7 +12,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "secrets:list": "wrangler secret list",
     "smoke": "node scripts/smoke.mjs",
-    "smoke:slice2": "node scripts/smoke-slice2.mjs"
+    "smoke:slice2": "node scripts/smoke-slice2.mjs",
+    "smoke:autocreate": "node scripts/smoke-autocreate.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261008.1",

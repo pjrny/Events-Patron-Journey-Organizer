@@ -12,7 +12,8 @@ const accountSteps = (lead = "New organizer? Start here.") => `<div id="accountS
 <ol style="margin:.4rem 0 0;padding-left:1.3rem">
 <li>First, create your account on pjrny.com: <a href="${PJ_SIGNUP_URL}" target="_top">sign up here</a>.
 Already have one? <a href="${PJ_LOGIN_URL}" target="_top">Sign in on pjrny.com</a>.</li>
-<li>Then come back to this page and sign in to the organizer dashboard with an email link or your email + PIN, using the same email address.</li>
+<li>Then come back to this page and request an email sign-in link with the same email address. Your organizer account is set up automatically the first time you use the link.</li>
+<li>Once signed in, set a PIN to sign in faster next time with email + PIN.</li>
 </ol></div>`;
 
 // Shared by every page. When embedded cross-site (pjrny.com -> workers.dev) some browsers (Safari, strict
@@ -72,19 +73,27 @@ const show = (el, txt, ok) => { el.className = 'msg ' + (ok ? 'ok' : 'err'); el.
 async function api(path, opts = {}) {
   const r = await pjFetch(path, opts);
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.message || ('HTTP ' + r.status));
+  if (!r.ok) { const er = new Error(d.message || ('HTTP ' + r.status)); er.code = d.error; throw er; }
   return d;
 }
+const highlightSteps = () => { const s = $('accountSteps'); if (s) { s.style.outline = '2px solid #6b3fa0'; s.scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
 async function boot() {
-  try { const me = await api('/api/auth/me'); $('who').textContent = me.organizer.email; $('app').classList.remove('hidden'); loadEvents(); }
+  try { const me = await api('/api/auth/me'); $('who').textContent = me.organizer.email; $('app').classList.remove('hidden');
+    if (!me.organizer.pin_set) $('pinSetup').classList.remove('hidden'); else $('pinChange').classList.remove('hidden');
+    loadEvents(); }
   catch { $('login').classList.remove('hidden'); }
 }
 $('magicForm').onsubmit = async (e) => { e.preventDefault();
-  try { await api('/api/auth/magic-link', { method: 'POST', body: JSON.stringify({ email: $('mEmail').value }) }); show($('loginMsg'), 'If that email belongs to an organizer, a sign-in link is on its way. It expires in 15 minutes.', true); }
-  catch (err) { show($('loginMsg'), err.message, false); } };
+  try { const d = await api('/api/auth/magic-link', { method: 'POST', body: JSON.stringify({ email: $('mEmail').value }) }); show($('loginMsg'), d.message || 'Check your email for a sign-in link. It expires in 15 minutes.', true); }
+  catch (err) { show($('loginMsg'), err.message, false); if (err.code === 'signup_required') highlightSteps(); } };
 $('pinForm').onsubmit = async (e) => { e.preventDefault();
   try { const d = await api('/api/auth/pin', { method: 'POST', body: JSON.stringify({ email: $('pEmail').value, pin: $('pPin').value }) }); pjToken.set(d.token); location.reload(); }
-  catch (err) { show($('loginMsg'), err.message, false); } };
+  catch (err) { show($('loginMsg'), err.message, false); if (err.code === 'signup_required') highlightSteps(); if (err.code === 'pin_not_set') $('mEmail').value = $('pEmail').value; } };
+for (const f of document.querySelectorAll('form.pinSetForm')) f.onsubmit = async (e) => { e.preventDefault();
+  const p1 = f.elements.pin.value.trim(), p2 = f.elements.pin2.value.trim(), m = f.querySelector('.msg');
+  if (p1 !== p2) { show(m, 'The two PINs do not match.', false); return; }
+  try { await api('/api/organizer/pin', { method: 'POST', body: JSON.stringify({ pin: p1 }) }); show(m, 'PIN saved. Next time you can sign in with your email + PIN.', true); f.reset(); }
+  catch (err) { show(m, err.message, false); } };
 $('logout').onclick = async (e) => { e.preventDefault(); await api('/api/auth/logout', { method: 'POST' }).catch(() => {}); pjToken.set(null); location.reload(); };
 async function loadEvents() {
   const d = await api('/api/organizer/events'); const tb = $('events'); tb.innerHTML = '';
@@ -123,6 +132,15 @@ export function dashboardPage(env: Env): string {
 </section>
 <section id="app" class="hidden">
   <p>Signed in as <b id="who"></b> &middot; <a href="#" id="logout">Sign out</a></p>
+  <fieldset id="pinSetup" class="hidden" style="background:#f4f1f8"><legend>Set your organizer PIN</legend>
+    <p>Welcome! Your organizer account is ready. Set a 6-12 digit PIN so you can sign in with email + PIN next time (email sign-in links keep working too).</p>
+    <form class="pinSetForm"><div class="row"><div><label>New PIN</label><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" required autocomplete="new-password"></div>
+    <div><label>Repeat PIN</label><input name="pin2" type="password" inputmode="numeric" pattern="[0-9]{6,12}" required autocomplete="new-password"></div></div>
+    <div class="msg hidden"></div><p><button>Save PIN</button></p></form></fieldset>
+  <details id="pinChange" class="hidden"><summary>Change PIN</summary>
+    <form class="pinSetForm"><div class="row"><div><label>New PIN</label><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6,12}" required autocomplete="new-password"></div>
+    <div><label>Repeat PIN</label><input name="pin2" type="password" inputmode="numeric" pattern="[0-9]{6,12}" required autocomplete="new-password"></div></div>
+    <div class="msg hidden"></div><p><button>Save PIN</button></p></form></details>
   <nav><a href="#my">My Events</a><a href="#create">Create Event</a><a href="/dashboard/checkin">Attendees &amp; Check-In Scanner</a><span style="color:#999">Speakers &middot; Vendors (next)</span></nav>
   <h2 id="my">My Events</h2>
   <table><thead><tr><th>ID</th><th>Name</th><th>Starts</th><th>Seats</th><th>Status</th><th></th></tr></thead><tbody id="events"></tbody></table>

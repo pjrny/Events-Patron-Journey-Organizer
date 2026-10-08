@@ -39,7 +39,10 @@
     "PJ_SPONSOR_PARTNER_ID": "20",
     "PJ_SPONSOR_TYPE_ID": "4",
     // Fallback product for new free tickets ("Event Registration").
-    "ODOO_TICKET_PRODUCT_ID": "36"
+    "ODOO_TICKET_PRODUCT_ID": "36",
+    // Organizer self-service: first verified sign-in auto-creates the organizer when the email has an
+    // Odoo res.users account; users of this website (2 = pjrny.com) are preferred.
+    "ORGANIZER_SIGNUP_WEBSITE_ID": "2"
   },
 
   // D1 = ownership + sessions + audit ONLY. Odoo stays the source of truth.

@@ -80,3 +80,7 @@ ADMIN_TOKEN_FILE=... TEST_ORGANIZER_PIN_FILE=... npm run smoke:slice2   # auth +
 CI (optional): copy `docs/github-actions-deploy.yml.example` to `.github/workflows/deploy.yml` (the push token used for the scaffold lacked the `workflow` scope). It typechecks every push to `main` and deploys when the repo secret `CLOUDFLARE_API_TOKEN` exists.
 
 Paid tier (paid tickets, POS, RFID, mobile apps, advanced attendance): https://www.pjrny.com/#Contact-us
+
+## Organizer onboarding
+
+pjrny.com users become organizers on their first verified email sign-in. See [docs/AUTO_CREATE.md](docs/AUTO_CREATE.md).
