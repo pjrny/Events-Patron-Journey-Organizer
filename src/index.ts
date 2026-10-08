@@ -9,14 +9,14 @@ import { resolveOdooKey, odoo, OdooError } from "./odoo";
 import { runReadProbe, runWriteProbe } from "./probe";
 import {
   requireOrganizer, authenticate, requestMagicLink, consumeMagicLink, pinLogin, sessionCookie, clearSessionCookie,
-  revokeSession, setOrganizerPin, upsertOrganizer, normalizeEmail, getOrganizerByEmail, issueMagicToken, baseUrl, validatePin,
+  revokeSession, assertSameOriginPost, setOrganizerPin, upsertOrganizer, normalizeEmail, getOrganizerByEmail, issueMagicToken, baseUrl, validatePin,
 } from "./auth";
 import { createEvent, updateEvent, archiveEvent, publishEvent, listEvents, eventSummary, readEventBody } from "./events";
 import { requireOwnership } from "./db";
 import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "./dashboard";
 import { checkIn, listAttendees } from "./checkin";
 
-const VERSION = "0.3.0-slice3";
+const VERSION = "0.3.1-embed";
 
 function requireAdmin(req: Request, env: Env): void {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN secret is not configured on this Worker", "admin_not_configured");
@@ -96,6 +96,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
 
   // ---------- Auth API ----------
   if (pathname.startsWith("/api/auth/")) {
+    if (method === "POST") assertSameOriginPost(req);
     if (method === "POST" && pathname === "/api/auth/magic-link") {
       const b = await body(req);
       const r = await requestMagicLink(env, req, b.email);

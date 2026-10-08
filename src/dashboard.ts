@@ -3,6 +3,24 @@ import type { Env } from "./env";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+// Shared by every page. When embedded cross-site (pjrny.com -> workers.dev) some browsers (Safari, strict
+// privacy modes) drop the third-party session cookie, so the JWT returned by PIN login is also kept in this
+// frame's sessionStorage and sent as a Bearer token. Cookie auth keeps working wherever it is allowed.
+const COMMON_JS = `
+const PJ_TK = 'pj_token';
+const pjToken = { get() { try { return sessionStorage.getItem(PJ_TK); } catch { return null; } },
+  set(v) { try { v ? sessionStorage.setItem(PJ_TK, v) : sessionStorage.removeItem(PJ_TK); } catch {} } };
+const PJ_FRAMED = (() => { try { return window.self !== window.top; } catch { return true; } })();
+if (PJ_FRAMED) { const n = document.getElementById('framedNote'); if (n) n.classList.remove('hidden'); document.body.style.margin = '1rem auto'; }
+async function pjFetch(path, opts = {}) {
+  const headers = { 'content-type': 'application/json', ...(opts.headers || {}) };
+  const t = pjToken.get(); if (t) headers.authorization = 'Bearer ' + t;
+  const r = await fetch(path, { credentials: 'same-origin', ...opts, headers });
+  if (r.status === 401 && t) pjToken.set(null);
+  return r;
+}
+`;
+
 export const shell = (env: Env, title: string, body: string, script = "") => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} | Patron Journey Organizer</title>
@@ -15,10 +33,14 @@ button{background:#6b3fa0;color:#fff;border:0;border-radius:6px;padding:.6rem 1.
 .msg{padding:.6rem;border-radius:6px;margin:.6rem 0}.ok{background:#e9f7ef}.err{background:#fdecea}table{width:100%;border-collapse:collapse}td,th{padding:.4rem;border-bottom:1px solid #eee;text-align:left;font-size:.92rem}
 nav a{margin-right:1rem}.hidden{display:none}
 </style></head>
-<body><h1>${esc(title)}</h1>${body}
+<body><h1>${esc(title)}</h1>
+<div id="framedNote" class="msg hidden" style="background:#f4f1f8;font-size:.9rem">You're using the dashboard embedded on pjrny.com.
+Email sign-in links open in a new tab: after clicking one, come back and reload this page. If this panel still asks you to sign in, use email + PIN here
+or <a href="${esc(env.PUBLIC_BASE_URL || "")}/dashboard" target="_blank" rel="noopener">open the dashboard in a new tab</a>.</div>
+${body}
 <hr><p><small>Free tier: free and pay-at-door tickets only. Paid tickets, POS, RFID, mobile apps and advanced attendance:
-<a href="${esc(env.PAID_UPGRADE_URL)}">contact Patron Journey</a>.</small></p>
-<script>${script}</script></body></html>`;
+<a href="${esc(env.PAID_UPGRADE_URL)}" target="_top">contact Patron Journey</a>.</small></p>
+<script>${COMMON_JS}${script}</script></body></html>`;
 
 export function magicConfirmPage(env: Env, token: string): string {
   // GET does not consume the token (email link scanners pre-fetch links). The button POSTs it.
@@ -34,7 +56,7 @@ const DASH_JS = `
 const $ = (id) => document.getElementById(id);
 const show = (el, txt, ok) => { el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = txt; el.classList.remove('hidden'); };
 async function api(path, opts = {}) {
-  const r = await fetch(path, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...opts });
+  const r = await pjFetch(path, opts);
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.message || ('HTTP ' + r.status));
   return d;
@@ -47,9 +69,9 @@ $('magicForm').onsubmit = async (e) => { e.preventDefault();
   try { await api('/api/auth/magic-link', { method: 'POST', body: JSON.stringify({ email: $('mEmail').value }) }); show($('loginMsg'), 'If that email belongs to an organizer, a sign-in link is on its way. It expires in 15 minutes.', true); }
   catch (err) { show($('loginMsg'), err.message, false); } };
 $('pinForm').onsubmit = async (e) => { e.preventDefault();
-  try { await api('/api/auth/pin', { method: 'POST', body: JSON.stringify({ email: $('pEmail').value, pin: $('pPin').value }) }); location.reload(); }
+  try { const d = await api('/api/auth/pin', { method: 'POST', body: JSON.stringify({ email: $('pEmail').value, pin: $('pPin').value }) }); pjToken.set(d.token); location.reload(); }
   catch (err) { show($('loginMsg'), err.message, false); } };
-$('logout').onclick = async () => { await api('/api/auth/logout', { method: 'POST' }).catch(() => {}); location.reload(); };
+$('logout').onclick = async (e) => { e.preventDefault(); await api('/api/auth/logout', { method: 'POST' }).catch(() => {}); pjToken.set(null); location.reload(); };
 async function loadEvents() {
   const d = await api('/api/organizer/events'); const tb = $('events'); tb.innerHTML = '';
   for (const r of d.events) { const e = r.odoo || {}; const tr = document.createElement('tr');
@@ -122,7 +144,7 @@ const CHECKIN_JS = `
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 async function api(path, opts = {}) {
-  const r = await fetch(path, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...opts });
+  const r = await pjFetch(path, opts);
   const d = await r.json().catch(() => ({}));
   if (r.status === 401) { location.href = '/dashboard'; throw new Error('Sign in required'); }
   if (!r.ok && !d.result) throw new Error(d.message || ('HTTP ' + r.status));

@@ -110,11 +110,21 @@ export async function createSession(env: Env, req: Request, org: Organizer, meth
   return { token, expires_at: new Date(exp * 1000).toISOString(), max_age: exp - now };
 }
 
+// SameSite=None so the session survives inside the cross-site iframe on pjrny.com (pjrny.com -> workers.dev).
+// CSRF is handled explicitly: cookie-authenticated writes require Origin == this Worker (requireOrganizer,
+// assertSameOriginPost). Browsers that block third-party cookies fall back to the Bearer token kept in the
+// iframe's sessionStorage by the dashboard JS.
 export function sessionCookie(token: string, maxAge: number): string {
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=${maxAge}`;
 }
 export function clearSessionCookie(): string {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`;
+}
+
+/** Browser POSTs to auth endpoints must come from this Worker's own pages (blocks login/logout CSRF). Non-browser clients send no Origin. */
+export function assertSameOriginPost(req: Request): void {
+  const origin = req.headers.get("origin");
+  if (origin && origin !== new URL(req.url).origin) throw new HttpError(403, "Cross-site request blocked", "csrf");
 }
 
 function readCookie(req: Request, name: string): string | null {

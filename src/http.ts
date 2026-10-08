@@ -9,14 +9,32 @@ export function json(data: unknown, status = 200, headers: HeadersInit = {}): Re
   });
 }
 
+/**
+ * Sites allowed to embed the organizer pages in an <iframe>.
+ * - pjrny.com (any subdomain, incl. www) is the public embed target (www.pjrny.com/organizers).
+ * - patronjourney.odoo.com / patronjourney.com are included because the Odoo website editor previews
+ *   pjrny pages inside a backend iframe, and frame-ancestors is checked against EVERY ancestor.
+ * Everything else (including X-Frame-Options-style clickjacking from other sites) stays blocked.
+ */
+export const FRAME_ANCESTORS = [
+  "'self'",
+  "https://pjrny.com",
+  "https://*.pjrny.com",
+  "https://patronjourney.com",
+  "https://*.patronjourney.com",
+  "https://patronjourney.odoo.com",
+];
+
 export function html(body: string, status = 200): Response {
   return new Response(body, {
     status,
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
-      "x-frame-options": "DENY",
+      // X-Frame-Options cannot express an allow-list, so it is intentionally NOT sent; CSP frame-ancestors replaces it.
+      "content-security-policy": `frame-ancestors ${FRAME_ANCESTORS.join(" ")}`,
       "referrer-policy": "no-referrer",
+      "permissions-policy": "camera=(self)",
     },
   });
 }
