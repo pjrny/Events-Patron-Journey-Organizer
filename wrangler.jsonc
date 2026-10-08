@@ -30,7 +30,16 @@
     "PAID_UPGRADE_URL": "https://www.pjrny.com/#Contact-us",
     "PUBLIC_EVENTS_URL": "https://www.patronjourney.com/event",
     "SESSION_TTL_HOURS": "12",
-    "MAGIC_LINK_TTL_MINUTES": "15"
+    "MAGIC_LINK_TTL_MINUTES": "15",
+    "PUBLIC_BASE_URL": "https://events-patronjourney.message-0ad.workers.dev",
+    "MAIL_FROM": "",
+    // Websites organizers may publish to: 1 = Patron Journey (company 1), 2 = pjrny (company 3).
+    "ALLOWED_WEBSITE_IDS": "1,2",
+    // Fixed "PATRON JOURNEY" sponsor recreated on every copy (partner 20, sponsor type 4).
+    "PJ_SPONSOR_PARTNER_ID": "20",
+    "PJ_SPONSOR_TYPE_ID": "4",
+    // Fallback product for new free tickets ("Event Registration").
+    "ODOO_TICKET_PRODUCT_ID": "36"
   },
 
   // D1 = ownership + sessions + audit ONLY. Odoo stays the source of truth.

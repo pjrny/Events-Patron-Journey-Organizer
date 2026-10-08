@@ -7,7 +7,11 @@ Organizer platform for Patron Journey events. Runs as the Cloudflare Worker **`e
 - **D1** stores ownership, sessions, and audit only. **KV** is a cache only.
 - Attendees keep using the native Odoo event pages.
 
-## Status: slice 1 (scaffold) — deployed
+## Status: slice 2 (auth + create event) — deployed
+
+Auth (magic link via Odoo mail + email/PIN → JWT), ownership-gated organizer API, create/edit/publish/archive events by copying Testival (14), minimal dashboard at `/dashboard`. Details, API and smoke results: [`docs/SLICE2.md`](docs/SLICE2.md).
+
+### Slice 1 (scaffold)
 
 Live: https://events-patronjourney.message-0ad.workers.dev · D1 `events-patronjourney-db` · KV **not bound yet** (deploy token lacks Workers KV Storage: Edit; cache helpers no-op until it is). Probe results: [`docs/PROBE_RESULTS.md`](docs/PROBE_RESULTS.md).
 
@@ -20,7 +24,7 @@ Live: https://events-patronjourney.message-0ad.workers.dev · D1 `events-patronj
 | `GET /api/admin/odoo/probe[?full=1]` | `Bearer ADMIN_TOKEN` | read-only Odoo JSON-2 probe: plan/auth check, field map, Testival (event 14) summary, websites, templates, tags |
 | `POST /api/admin/odoo/probe-write?confirm=yes` | `Bearer ADMIN_TOKEN` | copies event 14 **once** into "PJ Organizer API Probe", sets it unpublished, reports what the copy carried over, archives it |
 
-Next slices: auth (magic link + PIN → JWT), create-event (duplicate template → patch → tickets), edit/archive, speakers/vendors, attendees, scanner. See [`docs/PLAN.md`](docs/PLAN.md).
+Next slices: attendee registration + check-in scanner unit test, speakers/vendors management, attendee list. See [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Layout
 
@@ -33,6 +37,11 @@ src/probe.ts            Odoo discovery + one-off write probe
 src/db.ts               schema bootstrap, ownership gate, audit log
 src/cache.ts            KV cache helpers (cache only)
 src/crypto.ts           HS256 JWT, PBKDF2 PIN hashing, constant-time compare
+src/auth.ts             magic link, PIN, sessions, JWT gate
+src/events.ts           create/update/publish/archive events on Odoo
+src/mail.ts             outbound mail via Odoo mail.mail
+src/time.ts             local <-> UTC for Odoo datetimes
+src/dashboard.ts        minimal organizer dashboard HTML
 docs/                   plan, Odoo API map, deploy notes
 ```
 
@@ -44,8 +53,9 @@ Values are never committed, logged, or returned. The Worker reads them as bindin
 |---|---|
 | `ODOO` — Odoo admin API key (var `ODOO_KEY_BINDING` names it; `ODOO_API_KEY` etc. also accepted) | JSON-2 calls (admin user for now; move to a dedicated bot user) |
 | `ADMIN_TOKEN` | gates `/api/admin/*` |
-| `JWT_SECRET` | organizer session JWTs (next slice) |
-| `PIN_PEPPER` | PIN hashing pepper (next slice) |
+| `JWT_SECRET` | organizer session JWTs |
+| `PIN_PEPPER` | PIN hashing pepper |
+| `TEST_ORGANIZER_PIN` | smoke-test PIN for `organizer+test@pjrny.com` (seeded via `POST /api/admin/organizers`) |
 | `ORGANIZER_TEST_PASSWORD`, `ATTENDEE_TEST_PASSWORD` | end-to-end tests with `organizer+test@pjrny.com` / `attendee1+test@pjrny.com` |
 
 ## Develop / deploy
@@ -60,6 +70,7 @@ npx wrangler login               # or CLOUDFLARE_API_TOKEN
 npm run deploy                   # first deploy auto-creates the D1 db + KV namespace; commit the ids written into wrangler.jsonc
 npm run db:migrate:remote        # optional, the Worker self-applies 0001 anyway
 BASE_URL=https://events-patronjourney.<subdomain>.workers.dev ADMIN_TOKEN=... npm run smoke
+ADMIN_TOKEN_FILE=... TEST_ORGANIZER_PIN_FILE=... npm run smoke:slice2   # auth + create event, archives the test event
 ```
 
 CI (optional): copy `docs/github-actions-deploy.yml.example` to `.github/workflows/deploy.yml` (the push token used for the scaffold lacked the `workflow` scope). It typechecks every push to `main` and deploys when the repo secret `CLOUDFLARE_API_TOKEN` exists.
