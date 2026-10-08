@@ -1,0 +1,21 @@
+{
+  "name": "events-patronjourney",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Patron Journey Event Organizer Platform - Cloudflare Worker (organizer dashboard + API gateway in front of Odoo Online)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "secrets:list": "wrangler secret list",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261008.1",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.148.0"
+  }
+}

@@ -1,0 +1,35 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 0adfeaaccd1d2cfa389d7bcd33b55ee4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Skip deploy when CLOUDFLARE_API_TOKEN is not configured
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::notice::CLOUDFLARE_API_TOKEN repo secret not set - typecheck only, no deploy."
+      - name: Deploy (auto-provisions D1 + KV on first run)
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npx wrangler deploy
+      - name: Apply D1 migrations
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        # The Worker also self-applies 0001 on first request; this keeps wrangler's migration ledger in sync.
+        run: npx wrangler d1 migrations apply events-patronjourney-db --remote || echo "::warning::migrations apply skipped (database_id not yet in wrangler.jsonc); Worker self-bootstraps schema."

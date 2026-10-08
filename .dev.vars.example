@@ -1,0 +1,8 @@
+# Copy to .dev.vars for `wrangler dev` (never commit .dev.vars).
+# Production values live ONLY as Cloudflare Worker secrets.
+ODOO_API_KEY=
+ADMIN_TOKEN=
+JWT_SECRET=
+PIN_PEPPER=
+ORGANIZER_TEST_PASSWORD=
+ATTENDEE_TEST_PASSWORD=

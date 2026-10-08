@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Deploys over the EXISTING Worker service "events-patronjourney" so the Odoo API key
+  // and test-password secrets already set in the Cloudflare dashboard stay bound.
+  "name": "events-patronjourney",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Host on workers.dev only until the platform is proven. No routes / custom domains.
+  "workers_dev": true,
+  "preview_urls": true,
+
+  // Do not wipe plain-text vars that may have been set in the dashboard.
+  "keep_vars": true,
+
+  "observability": { "enabled": true },
+
+  // Lets src/db.ts import migrations/0001_init.sql as text for self-bootstrap.
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
+
+  "vars": {
+    "APP_ENV": "production",
+    "ODOO_URL": "https://patronjourney.odoo.com",
+    "ODOO_DB": "",
+    "ODOO_TEMPLATE_EVENT_ID": "14",
+    "PAID_UPGRADE_URL": "https://www.pjrny.com/#Contact-us",
+    "PUBLIC_EVENTS_URL": "https://www.patronjourney.com/event",
+    "SESSION_TTL_HOURS": "12",
+    "MAGIC_LINK_TTL_MINUTES": "15"
+  },
+
+  // D1 = ownership + sessions + audit ONLY. Odoo stays the source of truth.
+  // database_id is omitted on purpose: wrangler >= 4.45 auto-provisions on first
+  // `wrangler deploy` and writes the id back into this file. Commit it afterwards.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "events-patronjourney-db",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // KV = cache only (Odoo reads such as venues, tags, event summaries). Never authoritative.
+  "kv_namespaces": [
+    {
+      "binding": "CACHE"
+    }
+  ]
+}
