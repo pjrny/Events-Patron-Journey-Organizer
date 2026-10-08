@@ -3,6 +3,18 @@ import type { Env } from "./env";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+// Organizers need a pjrny.com website account first. Links use target="_top" so they open in the full
+// window (not inside the frame) when the dashboard is embedded on pjrny.com.
+const PJ_SIGNUP_URL = "https://www.pjrny.com/web/signup";
+const PJ_LOGIN_URL = "https://www.pjrny.com/web/login";
+const accountSteps = (lead = "New organizer? Start here.") => `<div id="accountSteps" class="msg" style="background:#f4f1f8">
+<b>${lead}</b>
+<ol style="margin:.4rem 0 0;padding-left:1.3rem">
+<li>First, create your account on pjrny.com: <a href="${PJ_SIGNUP_URL}" target="_top">sign up here</a>.
+Already have one? <a href="${PJ_LOGIN_URL}" target="_top">Sign in on pjrny.com</a>.</li>
+<li>Then come back to this page and sign in to the organizer dashboard with an email link or your email + PIN, using the same email address.</li>
+</ol></div>`;
+
 // Shared by every page. When embedded cross-site (pjrny.com -> workers.dev) some browsers (Safari, strict
 // privacy modes) drop the third-party session cookie, so the JWT returned by PIN login is also kept in this
 // frame's sessionStorage and sent as a Bearer token. Cookie auth keeps working wherever it is allowed.
@@ -35,6 +47,7 @@ nav a{margin-right:1rem}.hidden{display:none}
 </style></head>
 <body><h1>${esc(title)}</h1>
 <div id="framedNote" class="msg hidden" style="background:#f4f1f8;font-size:.9rem">You're using the dashboard embedded on pjrny.com.
+New organizers: first <a href="${PJ_SIGNUP_URL}" target="_top">create a pjrny.com account</a> or <a href="${PJ_LOGIN_URL}" target="_top">sign in on pjrny.com</a>, then return to this page.
 Email sign-in links open in a new tab: after clicking one, come back and reload this page. If this panel still asks you to sign in, use email + PIN here
 or <a href="${esc(env.PUBLIC_BASE_URL || "")}/dashboard" target="_blank" rel="noopener">open the dashboard in a new tab</a>.</div>
 ${body}
@@ -45,11 +58,12 @@ ${body}
 export function magicConfirmPage(env: Env, token: string): string {
   // GET does not consume the token (email link scanners pre-fetch links). The button POSTs it.
   return shell(env, "Sign in", `<form method="post" action="/auth/magic"><input type="hidden" name="token" value="${esc(token)}">
-<p>Click to finish signing in to the Patron Journey organizer dashboard.</p><button type="submit">Sign in</button></form>`);
+<p>Click to finish signing in to the Patron Journey organizer dashboard.</p><button type="submit">Sign in</button></form>
+${accountSteps("Don't have an organizer account yet?")}`);
 }
 
 export function errorPage(env: Env, message: string): string {
-  return shell(env, "Sign in", `<div class="msg err">${esc(message)}</div><p><a href="/dashboard">Back to sign in</a></p>`);
+  return shell(env, "Sign in", `<div class="msg err">${esc(message)}</div>${accountSteps("Don't have an organizer account yet?")}<p><a href="/dashboard">Back to sign in</a></p>`);
 }
 
 const DASH_JS = `
@@ -102,6 +116,7 @@ boot();
 export function dashboardPage(env: Env): string {
   return shell(env, "Organizer Dashboard", `
 <section id="login" class="hidden">
+  ${accountSteps()}
   <div id="loginMsg" class="msg hidden"></div>
   <fieldset><legend>Email me a sign-in link</legend><form id="magicForm"><label>Email</label><input id="mEmail" type="email" required autocomplete="email"><p><button>Send link</button></p></form></fieldset>
   <fieldset><legend>Or sign in with email + PIN</legend><form id="pinForm"><label>Email</label><input id="pEmail" type="email" required autocomplete="email"><label>PIN</label><input id="pPin" type="password" inputmode="numeric" required autocomplete="current-password"><p><button>Sign in</button></p></form></fieldset>
