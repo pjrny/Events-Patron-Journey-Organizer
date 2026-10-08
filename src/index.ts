@@ -13,9 +13,10 @@ import {
 } from "./auth";
 import { createEvent, updateEvent, archiveEvent, publishEvent, listEvents, eventSummary, readEventBody } from "./events";
 import { requireOwnership } from "./db";
-import { shell, dashboardPage, magicConfirmPage, errorPage } from "./dashboard";
+import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "./dashboard";
+import { checkIn, listAttendees } from "./checkin";
 
-const VERSION = "0.2.0-slice2";
+const VERSION = "0.3.0-slice3";
 
 function requireAdmin(req: Request, env: Env): void {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN secret is not configured on this Worker", "admin_not_configured");
@@ -35,7 +36,7 @@ async function body(req: Request): Promise<any> {
 const publicOrganizer = (o: any) => o && { id: o.id, email: o.email, display_name: o.display_name, odoo_partner_id: o.odoo_partner_id, odoo_user_id: o.odoo_user_id, role: o.role, tier: o.tier, active: o.active, pin_set: !!o.pin_hash };
 
 const READONLY_METHODS = new Set(["search_read", "read", "search_count", "fields_get"]);
-const READONLY_MODELS = /^(event\.[a-z.]+|mail\.mail|website|res\.partner|res\.country(\.state)?|ir\.attachment)$/;
+const READONLY_MODELS = /^(event\.[a-z.]+|mail\.mail|mail\.message|website|res\.partner|res\.country(\.state)?|ir\.attachment)$/;
 
 async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(req.url);
@@ -76,6 +77,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
   await ensureSchema(env);
 
   // ---------- Dashboard pages ----------
+  if (method === "GET" && (pathname === "/dashboard/checkin" || pathname === "/dashboard/checkin/")) return html(checkinPage(env));
   if (method === "GET" && (pathname === "/dashboard" || pathname.startsWith("/dashboard/"))) return html(dashboardPage(env));
 
   if (pathname === "/auth/magic") {
@@ -151,6 +153,11 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       }
       if ((method === "PATCH" || method === "PUT") && sub === "") return json(await updateEvent(env, req, org, eventId, await readEventBody(req)));
       if (method === "POST" && sub === "/archive") return json(await archiveEvent(env, req, org, eventId));
+      if (method === "POST" && sub === "/checkin") {
+        const b = await body(req);
+        return json(await checkIn(env, req, org, eventId, b.barcode));
+      }
+      if (method === "GET" && sub === "/attendees") return json(await listAttendees(env, org, eventId));
       if (method === "POST" && sub === "/publish") {
         const b = await body(req);
         return json(await publishEvent(env, req, org, eventId, b.published !== false));

@@ -1,0 +1,46 @@
+[
+  {
+    "id": 32,
+    "organizer_id": 1,
+    "action": "checkin.invalid",
+    "odoo_model": "event.registration",
+    "odoo_id": null,
+    "odoo_event_id": 17,
+    "detail": "{\"barcode\":\"1234567890123456789\",\"result\":\"invalid_ticket\",\"reason\":\"not_found_for_event\",\"prior_state\":null}",
+    "ip": "104.30.180.114",
+    "created_at": "2026-10-08 02:25:49"
+  },
+  {
+    "id": 31,
+    "organizer_id": 1,
+    "action": "checkin.performed",
+    "odoo_model": "event.registration",
+    "odoo_id": 41620,
+    "odoo_event_id": 17,
+    "detail": "{\"barcode\":\"2930877030294794526\",\"result\":\"checked_in\",\"method\":\"action_set_done\",\"prior_state\":\"open\"}",
+    "ip": "104.30.180.114",
+    "created_at": "2026-10-08 02:25:49"
+  },
+  {
+    "id": 30,
+    "organizer_id": 1,
+    "action": "checkin.duplicate",
+    "odoo_model": "event.registration",
+    "odoo_id": 41619,
+    "odoo_event_id": 17,
+    "detail": "{\"barcode\":\"5287448970230310227\",\"result\":\"already_checked_in\",\"prior_state\":\"done\"}",
+    "ip": "104.30.180.114",
+    "created_at": "2026-10-08 02:25:48"
+  },
+  {
+    "id": 29,
+    "organizer_id": 1,
+    "action": "checkin.performed",
+    "odoo_model": "event.registration",
+    "odoo_id": 41619,
+    "odoo_event_id": 17,
+    "detail": "{\"barcode\":\"5287448970230310227\",\"result\":\"checked_in\",\"method\":\"action_set_done\",\"prior_state\":\"open\"}",
+    "ip": "104.30.180.114",
+    "created_at": "2026-10-08 02:25:48"
+  }
+]

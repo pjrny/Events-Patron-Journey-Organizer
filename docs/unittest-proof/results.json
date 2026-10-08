@@ -1,0 +1,187 @@
+{
+  "event_id": 17,
+  "public_url": "https://www.patronjourney.com/event/patron-journey-test-festival-17",
+  "register_url": "https://www.patronjourney.com/event/patron-journey-test-festival-17/register",
+  "results": [
+    {
+      "step": "a",
+      "name": "PIN login as organizer+test@pjrny.com issues JWT",
+      "ok": true,
+      "at": "2026-10-08T02:26:42.956Z"
+    },
+    {
+      "step": "b",
+      "name": "create event (201)",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.159Z"
+    },
+    {
+      "step": "b",
+      "name": "event published on website",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.160Z"
+    },
+    {
+      "step": "b",
+      "name": "capacity 100",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.161Z"
+    },
+    {
+      "step": "b",
+      "name": "venue = Houston Test Venue (reuses contact 37265)",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.161Z"
+    },
+    {
+      "step": "b",
+      "name": "D1 ownership row -> organizer+test",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.234Z"
+    },
+    {
+      "step": "b",
+      "name": "track 'Main Artist' 6-7 PM",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.234Z"
+    },
+    {
+      "step": "b",
+      "name": "Patron Journey sponsor",
+      "ok": true,
+      "at": "2026-10-08T02:25:01.235Z"
+    },
+    {
+      "step": "b",
+      "name": "public event page reachable anonymously",
+      "ok": true,
+      "at": "2026-10-08T02:25:02.783Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee1+test@pjrny.com registered via native website form",
+      "ok": true,
+      "at": "2026-10-08T02:25:20.582Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee2+test@pjrny.com registered via native website form",
+      "ok": true,
+      "at": "2026-10-08T02:25:25.243Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee3+test@pjrny.com registered via native website form",
+      "ok": true,
+      "at": "2026-10-08T02:25:28.361Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee1+test@pjrny.com registration in Odoo (state open) + barcode",
+      "ok": true,
+      "at": "2026-10-08T02:25:28.464Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee2+test@pjrny.com registration in Odoo (state open) + barcode",
+      "ok": true,
+      "at": "2026-10-08T02:25:28.464Z"
+    },
+    {
+      "step": "c",
+      "name": "attendee3+test@pjrny.com registration in Odoo (state open) + barcode",
+      "ok": true,
+      "at": "2026-10-08T02:25:28.464Z"
+    },
+    {
+      "step": "c",
+      "name": "confirmation/ticket email sent for all 3 registrations (Odoo mail scheduler)",
+      "ok": true,
+      "at": "2026-10-08T02:26:29.090Z"
+    },
+    {
+      "step": "d",
+      "name": "scan attendee1 -> Checked In",
+      "ok": true,
+      "at": "2026-10-08T02:25:48.834Z"
+    },
+    {
+      "step": "d",
+      "name": "scan attendee1 again -> Already Checked In",
+      "ok": true,
+      "at": "2026-10-08T02:25:48.966Z"
+    },
+    {
+      "step": "d",
+      "name": "scan attendee2 -> Checked In",
+      "ok": true,
+      "at": "2026-10-08T02:25:49.527Z"
+    },
+    {
+      "step": "d",
+      "name": "unknown barcode -> Invalid Ticket",
+      "ok": true,
+      "at": "2026-10-08T02:25:49.917Z"
+    },
+    {
+      "step": "d",
+      "name": "check-in on an event the organizer does not own -> 403",
+      "ok": true,
+      "at": "2026-10-08T02:25:49.959Z"
+    },
+    {
+      "step": "d",
+      "name": "check-in without JWT -> 401",
+      "ok": true,
+      "at": "2026-10-08T02:25:49.970Z"
+    },
+    {
+      "step": "e",
+      "name": "final: 3 registered",
+      "ok": true,
+      "at": "2026-10-08T02:25:50.293Z"
+    },
+    {
+      "step": "e",
+      "name": "final: 2 checked in",
+      "ok": true,
+      "at": "2026-10-08T02:25:50.293Z"
+    },
+    {
+      "step": "e",
+      "name": "final: 1 pending (attendee3)",
+      "ok": true,
+      "at": "2026-10-08T02:25:50.293Z"
+    },
+    {
+      "step": "e",
+      "name": "every scan attempt audited (>= 4 checkin.* rows)",
+      "ok": true,
+      "at": "2026-10-08T02:25:50.520Z"
+    },
+    {
+      "step": "e",
+      "name": "GET /dashboard/checkin serves scanner page",
+      "ok": true,
+      "at": "2026-10-08T02:25:50.533Z"
+    },
+    {
+      "step": "f",
+      "name": "test event archived in Odoo (active=false, not deleted)",
+      "ok": true,
+      "at": "2026-10-08T02:26:43.159Z"
+    },
+    {
+      "step": "f",
+      "name": "public page no longer serves the event",
+      "ok": true,
+      "at": "2026-10-08T02:26:43.531Z"
+    },
+    {
+      "step": "f",
+      "name": "archived event is unpublished",
+      "ok": true,
+      "at": "2026-10-08T02:26:43.159Z"
+    }
+  ]
+}

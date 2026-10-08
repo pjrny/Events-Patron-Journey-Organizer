@@ -482,10 +482,12 @@ async function currentTicketFlags(c: Ctx, eventId: number) {
 export async function archiveEvent(env: Env, req: Request, org: Organizer, eventId: number) {
   await requireOwnership(env, org.id, eventId);
   const o = odoo(env);
+  // Unpublish first so an archived event can never resurface on the website, then archive (never delete).
+  await o.call("event.event", "write", { ids: [eventId], vals: { website_published: false } });
   await archiveInOdoo(o, eventId);
   await env.DB.prepare("UPDATE organizer_events SET status = 'archived' WHERE organizer_id = ? AND odoo_event_id = ?").bind(org.id, eventId).run();
   await audit(env, { organizerId: org.id, action: "event.archived", odooModel: "event.event", odooId: eventId, odooEventId: eventId, ip: clientIp(req) });
-  return { ok: true, odoo_event_id: eventId, archived: true };
+  return { ok: true, odoo_event_id: eventId, archived: true, published: false };
 }
 
 export async function publishEvent(env: Env, req: Request, org: Organizer, eventId: number, published: boolean) {

@@ -1,0 +1,14 @@
+{
+  "http": 200,
+  "response": {
+    "ok": true,
+    "odoo_event_id": 17,
+    "archived": true,
+    "published": false
+  },
+  "odoo": {
+    "id": 17,
+    "active": false,
+    "website_published": false
+  }
+}

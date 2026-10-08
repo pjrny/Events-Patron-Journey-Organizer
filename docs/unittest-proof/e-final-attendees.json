@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "event": {
+    "id": 17,
+    "name": "Patron Journey Test Festival",
+    "timezone": "America/Chicago",
+    "capacity": 100,
+    "active": true,
+    "published": true
+  },
+  "counts": {
+    "registered": 3,
+    "checked_in": 2,
+    "pending": 1,
+    "unconfirmed": 0,
+    "cancelled": 0
+  },
+  "attendees": [
+    {
+      "registration_id": 41619,
+      "name": "Attendee1 Test",
+      "email": "attendee1+test@pjrny.com",
+      "partner_id": null,
+      "ticket": "General Admission",
+      "ticket_id": 2471,
+      "state": "done",
+      "status": "Checked In",
+      "checked_in": true,
+      "checked_in_at_utc": "2026-10-08 02:25:48",
+      "checked_in_at_local": "2026-10-07T21:25",
+      "barcode": "5287448970230310227",
+      "registered_at_utc": "2026-10-08 02:25:17"
+    },
+    {
+      "registration_id": 41620,
+      "name": "Attendee2 Test",
+      "email": "attendee2+test@pjrny.com",
+      "partner_id": null,
+      "ticket": "General Admission",
+      "ticket_id": 2471,
+      "state": "done",
+      "status": "Checked In",
+      "checked_in": true,
+      "checked_in_at_utc": "2026-10-08 02:25:49",
+      "checked_in_at_local": "2026-10-07T21:25",
+      "barcode": "2930877030294794526",
+      "registered_at_utc": "2026-10-08 02:25:22"
+    },
+    {
+      "registration_id": 41621,
+      "name": "Attendee3 Test",
+      "email": "attendee3+test@pjrny.com",
+      "partner_id": null,
+      "ticket": "General Admission",
+      "ticket_id": 2471,
+      "state": "open",
+      "status": "Registered",
+      "checked_in": false,
+      "checked_in_at_utc": null,
+      "checked_in_at_local": null,
+      "barcode": "4178897669233028115",
+      "registered_at_utc": "2026-10-08 02:25:25"
+    }
+  ]
+}

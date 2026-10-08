@@ -1,0 +1,62 @@
+{
+  "attendee1": {
+    "method": "website_form",
+    "get_status": 200,
+    "csrf_found": true,
+    "recaptcha_or_turnstile_markup": false,
+    "new_status": 200,
+    "new_rpc_error": null,
+    "form_fields": [
+      "1-event_ticket_id",
+      "1-name-9",
+      "1-email-10",
+      "1-phone-11"
+    ],
+    "confirm_status": 303,
+    "confirm_location": "/event/17/registration/success?registration_ids=41619",
+    "registration_ids": [
+      41619
+    ],
+    "success_page_ok": false
+  },
+  "attendee2": {
+    "method": "website_form",
+    "get_status": 200,
+    "csrf_found": true,
+    "recaptcha_or_turnstile_markup": false,
+    "new_status": 200,
+    "new_rpc_error": null,
+    "form_fields": [
+      "1-event_ticket_id",
+      "1-name-9",
+      "1-email-10",
+      "1-phone-11"
+    ],
+    "confirm_status": 303,
+    "confirm_location": "/event/17/registration/success?registration_ids=41620",
+    "registration_ids": [
+      41620
+    ],
+    "success_page_ok": false
+  },
+  "attendee3": {
+    "method": "website_form",
+    "get_status": 200,
+    "csrf_found": true,
+    "recaptcha_or_turnstile_markup": false,
+    "new_status": 200,
+    "new_rpc_error": null,
+    "form_fields": [
+      "1-event_ticket_id",
+      "1-name-9",
+      "1-email-10",
+      "1-phone-11"
+    ],
+    "confirm_status": 303,
+    "confirm_location": "/event/17/registration/success?registration_ids=41621",
+    "registration_ids": [
+      41621
+    ],
+    "success_page_ok": false
+  }
+}

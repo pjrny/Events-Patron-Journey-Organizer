@@ -1,0 +1,35 @@
+[
+  {
+    "label": "attendee1 first scan",
+    "http": 200,
+    "result": "checked_in",
+    "message": "Checked In",
+    "method": "action_set_done",
+    "attendee": "attendee1+test@pjrny.com",
+    "barcode": "5287448970230310227"
+  },
+  {
+    "label": "attendee1 second scan",
+    "http": 200,
+    "result": "already_checked_in",
+    "message": "Already Checked In",
+    "attendee": "attendee1+test@pjrny.com",
+    "barcode": "5287448970230310227"
+  },
+  {
+    "label": "attendee2 first scan",
+    "http": 200,
+    "result": "checked_in",
+    "message": "Checked In",
+    "method": "action_set_done",
+    "attendee": "attendee2+test@pjrny.com",
+    "barcode": "2930877030294794526"
+  },
+  {
+    "label": "bogus barcode",
+    "http": 200,
+    "result": "invalid_ticket",
+    "message": "Invalid Ticket",
+    "barcode": "1234567890123456789"
+  }
+]

@@ -1,0 +1,191 @@
+{
+  "registration_ids": [
+    41619,
+    41620,
+    41621
+  ],
+  "schedulers": [
+    {
+      "id": 34,
+      "interval_type": "after_sub",
+      "interval_nbr": 1,
+      "interval_unit": "now",
+      "template_ref": "mail.template,62",
+      "mail_done": false,
+      "mail_count_done": 3,
+      "scheduled_date": "2026-10-08 02:24:57",
+      "mail_state": "running"
+    },
+    {
+      "id": 35,
+      "interval_type": "before_event",
+      "interval_nbr": 1,
+      "interval_unit": "hours",
+      "template_ref": "mail.template,63",
+      "mail_done": false,
+      "mail_count_done": 0,
+      "scheduled_date": "2026-11-14 22:00:00",
+      "mail_state": "scheduled"
+    },
+    {
+      "id": 36,
+      "interval_type": "before_event",
+      "interval_nbr": 3,
+      "interval_unit": "days",
+      "template_ref": "mail.template,63",
+      "mail_done": false,
+      "mail_count_done": 0,
+      "scheduled_date": "2026-11-11 23:00:00",
+      "mail_state": "scheduled"
+    }
+  ],
+  "mail_messages": [
+    {
+      "id": 91545,
+      "res_id": 41619,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:17",
+      "partner_ids": []
+    },
+    {
+      "id": 91546,
+      "res_id": 41619,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "message_type": "email_outgoing",
+      "date": "2026-10-08 02:25:20",
+      "partner_ids": []
+    },
+    {
+      "id": 91547,
+      "res_id": 41620,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:22",
+      "partner_ids": []
+    },
+    {
+      "id": 91548,
+      "res_id": 41620,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "message_type": "email_outgoing",
+      "date": "2026-10-08 02:25:24",
+      "partner_ids": []
+    },
+    {
+      "id": 91549,
+      "res_id": 41621,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:25",
+      "partner_ids": []
+    },
+    {
+      "id": 91550,
+      "res_id": 41621,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "message_type": "email_outgoing",
+      "date": "2026-10-08 02:25:28",
+      "partner_ids": []
+    },
+    {
+      "id": 91551,
+      "res_id": 41619,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:48",
+      "partner_ids": []
+    },
+    {
+      "id": 91552,
+      "res_id": 41619,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:48",
+      "partner_ids": []
+    },
+    {
+      "id": 91553,
+      "res_id": 41620,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:49",
+      "partner_ids": []
+    },
+    {
+      "id": 91554,
+      "res_id": 41620,
+      "subject": false,
+      "message_type": "notification",
+      "date": "2026-10-08 02:25:49",
+      "partner_ids": []
+    }
+  ],
+  "mail_mail": [
+    {
+      "id": 65430,
+      "res_id": 41621,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "state": "outgoing",
+      "email_to": "\"Attendee3 Test\" <attendee3+test@pjrny.com>",
+      "failure_reason": false
+    },
+    {
+      "id": 65429,
+      "res_id": 41620,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "state": "outgoing",
+      "email_to": "\"Attendee2 Test\" <attendee2+test@pjrny.com>",
+      "failure_reason": false
+    },
+    {
+      "id": 65428,
+      "res_id": 41619,
+      "subject": "Your registration at Patron Journey Test Festival",
+      "state": "outgoing",
+      "email_to": "\"Attendee1 Test\" <attendee1+test@pjrny.com>",
+      "failure_reason": false
+    }
+  ],
+  "event_mail_registration": [
+    {
+      "id": 9178,
+      "registration_id": [
+        41621,
+        "Attendee3 Test"
+      ],
+      "scheduler_id": [
+        34,
+        "Patron Journey Test Festival"
+      ],
+      "mail_sent": true,
+      "scheduled_date": "2026-10-08 02:25:25"
+    },
+    {
+      "id": 9177,
+      "registration_id": [
+        41620,
+        "Attendee2 Test"
+      ],
+      "scheduler_id": [
+        34,
+        "Patron Journey Test Festival"
+      ],
+      "mail_sent": true,
+      "scheduled_date": "2026-10-08 02:25:22"
+    },
+    {
+      "id": 9176,
+      "registration_id": [
+        41619,
+        "Attendee1 Test"
+      ],
+      "scheduler_id": [
+        34,
+        "Patron Journey Test Festival"
+      ],
+      "mail_sent": true,
+      "scheduled_date": "2026-10-08 02:25:17"
+    }
+  ]
+}

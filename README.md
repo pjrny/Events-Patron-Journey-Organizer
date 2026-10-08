@@ -7,7 +7,11 @@ Organizer platform for Patron Journey events. Runs as the Cloudflare Worker **`e
 - **D1** stores ownership, sessions, and audit only. **KV** is a cache only.
 - Attendees keep using the native Odoo event pages.
 
-## Status: slice 2 (auth + create event) — deployed
+## Status: slice 3 (scanner + attendees) — deployed, unit test plan 30/30
+
+Check-in scanner (`/dashboard/checkin`, `POST /api/organizer/events/:id/checkin`), attendee list (`GET /api/organizer/events/:id/attendees`), archive now unpublishes first. Full end-to-end unit test (organizer PIN login → create/publish event 17 → 3 native website registrations → 2 check-ins + duplicate rejected → archive): [`docs/UNITTEST.md`](docs/UNITTEST.md).
+
+### Slice 2 (auth + create event)
 
 Auth (magic link via Odoo mail + email/PIN → JWT), ownership-gated organizer API, create/edit/publish/archive events by copying Testival (14), minimal dashboard at `/dashboard`. Details, API and smoke results: [`docs/SLICE2.md`](docs/SLICE2.md).
 
