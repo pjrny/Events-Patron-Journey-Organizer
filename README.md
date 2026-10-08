@@ -7,7 +7,9 @@ Organizer platform for Patron Journey events. Runs as the Cloudflare Worker **`e
 - **D1** stores ownership, sessions, and audit only. **KV** is a cache only.
 - Attendees keep using the native Odoo event pages.
 
-## Status: slice 1 (scaffold)
+## Status: slice 1 (scaffold) — deployed
+
+Live: https://events-patronjourney.message-0ad.workers.dev · D1 `events-patronjourney-db` · KV **not bound yet** (deploy token lacks Workers KV Storage: Edit; cache helpers no-op until it is). Probe results: [`docs/PROBE_RESULTS.md`](docs/PROBE_RESULTS.md).
 
 | Route | Auth | Purpose |
 |---|---|---|
@@ -40,8 +42,8 @@ Values are never committed, logged, or returned. The Worker reads them as bindin
 
 | Name | Used for |
 |---|---|
-| Odoo API key (any of `ODOO_API_KEY`, `ODOO_API_SECRET`, `ODOO_KEY`, … or set var `ODOO_KEY_BINDING` to its exact name) | JSON-2 calls (admin user for now; move to a dedicated bot user) |
-| `ADMIN_TOKEN` | gates `/api/admin/*` (**must be added**) |
+| `ODOO` — Odoo admin API key (var `ODOO_KEY_BINDING` names it; `ODOO_API_KEY` etc. also accepted) | JSON-2 calls (admin user for now; move to a dedicated bot user) |
+| `ADMIN_TOKEN` | gates `/api/admin/*` |
 | `JWT_SECRET` | organizer session JWTs (next slice) |
 | `PIN_PEPPER` | PIN hashing pepper (next slice) |
 | `ORGANIZER_TEST_PASSWORD`, `ATTENDEE_TEST_PASSWORD` | end-to-end tests with `organizer+test@pjrny.com` / `attendee1+test@pjrny.com` |

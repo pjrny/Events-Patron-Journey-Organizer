@@ -3,6 +3,7 @@
   // Deploys over the EXISTING Worker service "events-patronjourney" so the Odoo API key
   // and test-password secrets already set in the Cloudflare dashboard stay bound.
   "name": "events-patronjourney",
+  "account_id": "0adfeaaccd1d2cfa389d7bcd33b55ee4",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -24,6 +25,8 @@
     "ODOO_URL": "https://patronjourney.odoo.com",
     "ODOO_DB": "",
     "ODOO_TEMPLATE_EVENT_ID": "14",
+    // Name of the dashboard secret that holds the Odoo admin API key.
+    "ODOO_KEY_BINDING": "ODOO",
     "PAID_UPGRADE_URL": "https://www.pjrny.com/#Contact-us",
     "PUBLIC_EVENTS_URL": "https://www.patronjourney.com/event",
     "SESSION_TTL_HOURS": "12",
@@ -31,20 +34,19 @@
   },
 
   // D1 = ownership + sessions + audit ONLY. Odoo stays the source of truth.
-  // database_id is omitted on purpose: wrangler >= 4.45 auto-provisions on first
-  // `wrangler deploy` and writes the id back into this file. Commit it afterwards.
+  // Provisioned by the first `wrangler deploy` on 2026-10-07.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "events-patronjourney-db",
+      "database_id": "d2cd5d56-ed66-4db2-bb2d-5520f4665115",
       "migrations_dir": "migrations"
     }
   ],
 
   // KV = cache only (Odoo reads such as venues, tags, event summaries). Never authoritative.
-  "kv_namespaces": [
-    {
-      "binding": "CACHE"
-    }
-  ]
+  // TEMPORARILY DISABLED: the current deploy token lacks "Workers KV Storage: Edit", so wrangler
+  // cannot auto-provision the namespace. The Worker treats CACHE as optional (cache misses fall
+  // through to Odoo). Re-enable once the token has KV permission:
+  // "kv_namespaces": [{ "binding": "CACHE" }]
 }

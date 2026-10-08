@@ -1,7 +1,7 @@
 export interface Env {
   // Bindings
   DB: D1Database;
-  CACHE: KVNamespace;
+  CACHE?: KVNamespace; // optional: cache only
 
   // Plain vars (wrangler.jsonc)
   APP_ENV: string;

@@ -9,15 +9,18 @@ export const CACHE_TTL = {
 } as const;
 
 export async function cacheGet<T>(env: Env, key: string): Promise<T | null> {
+  if (!env.CACHE) return null; // KV not bound yet: behave as a permanent miss
   return (await env.CACHE.get<T>(key, "json")) ?? null;
 }
 
 export async function cachePut(env: Env, key: string, value: unknown, ttlSeconds: number): Promise<void> {
+  if (!env.CACHE) return;
   // KV minimum TTL is 60s.
   await env.CACHE.put(key, JSON.stringify(value), { expirationTtl: Math.max(60, ttlSeconds) });
 }
 
 export async function cacheDel(env: Env, key: string): Promise<void> {
+  if (!env.CACHE) return;
   await env.CACHE.delete(key);
 }
 

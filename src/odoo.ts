@@ -8,6 +8,7 @@ import type { Env } from "./env";
 
 /** Candidate secret binding names for the Odoo API key (first match wins). */
 const KEY_CANDIDATES = [
+  "ODOO", // name used in the Cloudflare dashboard
   "ODOO_API_KEY",
   "ODOO_API_SECRET",
   "ODOO_APIKEY",

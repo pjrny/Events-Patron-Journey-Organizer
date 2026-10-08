@@ -78,7 +78,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     if (method === "GET" && pathname === "/api/admin/diag") {
       const k = `diag:${crypto.randomUUID()}`;
       await cachePut(env, k, { t: Date.now() }, 60);
-      const kvOk = (await cacheGet(env, k)) !== null;
+      const kvOk = env.CACHE ? (await cacheGet(env, k)) !== null : "not_bound";
       ctx.waitUntil(cacheDel(env, k));
       return json({
         ok: true,
