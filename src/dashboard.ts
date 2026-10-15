@@ -251,3 +251,73 @@ export function checkinPage(env: Env): string {
 <table><thead><tr><th>Attendee</th><th>Ticket</th><th>Status</th><th></th></tr></thead><tbody id="att"></tbody></table>
 <script src="${H5QR_SRC}" integrity="${H5QR_SRI}" crossorigin="anonymous"></script>`, CHECKIN_JS);
 }
+
+// ---------- Simulator link: /claim?draft=&t= ----------
+const CLAIM_JS = `
+const $ = (id) => document.getElementById(id);
+const C = JSON.parse(document.getElementById('claimData').textContent);
+const show = (el, txt, ok) => { el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = txt; el.classList.remove('hidden'); };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+async function api(path, opts = {}) {
+  const r = await pjFetch(path, opts); const d = await r.json().catch(() => ({}));
+  if (!r.ok) { const er = new Error(d.message || ('HTTP ' + r.status)); er.code = d.error; er.status = r.status; throw er; }
+  return d;
+}
+function render(d) {
+  const p = d.payload, v = p.venue || {};
+  const rows = [['Event', p.name], ['Starts', p.start + ' (' + p.timezone + ')'], ['Ends', p.end], ['Venue', [v.name, v.street, v.city, v.state, v.zip].filter(Boolean).join(', ')],
+    ['Capacity', p.capacity], ['Tickets', ['General Admission (free)'].concat((p.tickets || []).map((t) => t.name)).join(' · ')],
+    ['Lineup', (p.lineup || []).map((a) => a.name).join(', ') || '(none)'], ['Tags', (p.tags || []).join(', ') || '(none)']];
+  $('summary').innerHTML = rows.map(([k, x]) => '<tr><th>' + k + '</th><td>' + esc(x) + '</td></tr>').join('');
+  $('confirm').classList.remove('hidden'); $('signin').classList.add('hidden');
+  if (d.created_event_id) { show($('createMsg'), 'This event was already created (Odoo event ' + d.created_event_id + ').', true); $('createBtn').textContent = 'Open it in my dashboard'; }
+}
+async function loadDraft() {
+  if (C.t) await api('/api/organizer/drafts/' + encodeURIComponent(C.draft) + '/claim', { method: 'POST', body: JSON.stringify({ claim_token: C.t }) });
+  render(await api('/api/organizer/drafts/' + encodeURIComponent(C.draft)));
+  if (C.t) history.replaceState(null, '', '/claim?draft=' + encodeURIComponent(C.draft));
+}
+async function boot() {
+  if (C.error) { show($('topMsg'), C.error, false); }
+  try { const me = await api('/api/auth/me'); $('who').textContent = me.organizer.email; }
+  catch { $('signin').classList.remove('hidden'); return; }
+  try { await loadDraft(); } catch (e) { show($('topMsg'), e.message, false); }
+}
+$('magicForm').onsubmit = async (e) => { e.preventDefault();
+  try { const d = await api('/api/auth/magic-link', { method: 'POST', body: JSON.stringify({ email: $('mEmail').value, draft: C.draft, t: C.t }) });
+    show($('loginMsg'), (d.message || 'Check your email for a sign-in link.') + ' The link brings you straight back to this event.', true); }
+  catch (err) { show($('loginMsg'), err.message, false); if (err.code === 'signup_required') $('accountSteps').style.outline = '2px solid #6b3fa0'; } };
+$('pinForm').onsubmit = async (e) => { e.preventDefault();
+  try { const d = await api('/api/auth/pin', { method: 'POST', body: JSON.stringify({ email: $('pEmail').value, pin: $('pPin').value }) }); pjToken.set(d.token);
+    $('who').textContent = d.organizer.email; await loadDraft(); }
+  catch (err) { show($('loginMsg'), err.message, false); } };
+$('createBtn').onclick = async () => {
+  $('createBtn').disabled = true; show($('createMsg'), 'Creating your event on Patron Journey...', true);
+  try { const d = await api('/api/organizer/drafts/' + encodeURIComponent(C.draft) + '/create', { method: 'POST', body: '{}' });
+    show($('createMsg'), 'Created! Taking you to your dashboard...', true); location.href = d.dashboard_url; }
+  catch (err) { $('createBtn').disabled = false; show($('createMsg'), err.message, false); } };
+boot();
+`;
+
+export function claimPage(env: Env, draftId: string, token: string, error?: string): string {
+  const data = JSON.stringify({ draft: draftId, t: token, error: error ?? null }).replace(/</g, "\\u003c");
+  return shell(env, "Create your event", `
+<script type="application/json" id="claimData">${data}</script>
+<div id="topMsg" class="msg hidden"></div>
+<section id="signin" class="hidden">
+  <p>Your Festival Forecaster simulation is saved. Sign in to turn it into a real event on Patron Journey.</p>
+  ${accountSteps("New here? Create your organizer account in two steps.")}
+  <div id="loginMsg" class="msg hidden"></div>
+  <fieldset><legend>Email me a sign-in link</legend><form id="magicForm"><label>Email (same as your pjrny.com account)</label><input id="mEmail" type="email" required autocomplete="email"><p><button>Send link</button></p></form></fieldset>
+  <fieldset><legend>Or sign in with email + PIN</legend><form id="pinForm"><label>Email</label><input id="pEmail" type="email" required autocomplete="email"><label>PIN</label><input id="pPin" type="password" inputmode="numeric" required autocomplete="current-password"><p><button>Sign in</button></p></form></fieldset>
+  <p><small>Your draft is kept for 7 days. Keep this tab (or the link) to come back to it.</small></p>
+</section>
+<section id="confirm" class="hidden">
+  <p>Signed in as <b id="who"></b></p>
+  <table id="summary"></table>
+  <p>This creates a <b>free ticketed event</b>: free General Admission plus pay-at-the-door ticket types at $0 online (guests pay the listed price at the door). You can edit everything in your dashboard before publishing.</p>
+  <div id="createMsg" class="msg hidden"></div>
+  <p><button id="createBtn">Create free event (pay at door)</button>
+  <a href="${esc(env.PAID_UPGRADE_URL || "https://www.pjrny.com/#Contact-us")}" target="_top" style="margin-left:1rem;display:inline-block;padding:.6rem 1.1rem;border:2px solid #6b3fa0;border-radius:6px;text-decoration:none">Create paid event</a></p>
+</section>`, CLAIM_JS);
+}

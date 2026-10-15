@@ -16,8 +16,21 @@ import { createEvent, updateEvent, archiveEvent, publishEvent, listEvents, event
 import { requireOwnership } from "./db";
 import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "./dashboard";
 import { checkIn, listAttendees } from "./checkin";
+import { claimPage } from "./dashboard";
+import {
+  readDraftBody, saveAnonymousDraft, saveOrganizerDraft, getOwnDraftPublic, createFromDraft, checkClaim, claimWithToken, linkDraftToAuthToken,
+} from "./drafts";
+import { sha256Hex } from "./crypto";
 
-const VERSION = "0.4.0-autocreate";
+/** Only the public simulator embed on pjrny.com may POST /api/drafts cross-origin. */
+const DRAFT_CORS_ORIGINS = new Set(["https://pjrny.com", "https://www.pjrny.com"]);
+function draftCors(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  if (!origin || !DRAFT_CORS_ORIGINS.has(origin)) return {};
+  return { "access-control-allow-origin": origin, vary: "Origin", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "600" };
+}
+
+const VERSION = "0.5.0-drafts";
 
 function requireAdmin(req: Request, env: Env): void {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN secret is not configured on this Worker", "admin_not_configured");
@@ -75,7 +88,41 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     return json({ paid_upgrade_url: env.PAID_UPGRADE_URL, public_events_url: env.PUBLIC_EVENTS_URL, ticket_types: ["General Admission", "Pay At Door", "Volunteer", "Staff"] });
   }
 
+  // ---------- Anonymous simulator drafts (CORS: pjrny.com only) ----------
+  if (pathname === "/api/drafts") {
+    const cors = draftCors(req);
+    const origin = req.headers.get("origin");
+    if (origin && origin !== url.origin && !cors["access-control-allow-origin"]) return json({ ok: false, error: "cors", message: "Origin not allowed" }, 403);
+    if (method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    if (method !== "POST") return json({ ok: false, error: "method_not_allowed", message: "POST only" }, 405, { allow: "POST, OPTIONS", ...cors });
+    await ensureSchema(env);
+    try {
+      return json(await saveAnonymousDraft(env, req, await readDraftBody(req)), 201, cors);
+    } catch (e) {
+      const r = errorResponse(e);
+      return new Response(r.body, { status: r.status, headers: { ...Object.fromEntries(r.headers), ...cors } });
+    }
+  }
+
   await ensureSchema(env);
+
+  if (method === "GET" && pathname === "/claim") {
+    const draftId = url.searchParams.get("draft") ?? "";
+    const t = url.searchParams.get("t") ?? "";
+    let error: string | undefined;
+    if (!draftId) error = "This link is missing the draft id. Open it again from the Festival Forecaster.";
+    else {
+      try {
+        const a = await authenticate(req, env);
+        if (a && t) await claimWithToken(env, req, a.organizer, draftId, t);
+        else if (!a && t) await checkClaim(env, draftId, t);
+      } catch (e) {
+        if (e instanceof HttpError) error = e.message;
+        else throw e;
+      }
+    }
+    return html(claimPage(env, draftId, t, error), error && !draftId ? 400 : 200);
+  }
 
   // ---------- Dashboard pages ----------
   if (method === "GET" && (pathname === "/dashboard/checkin" || pathname === "/dashboard/checkin/")) return html(checkinPage(env));
@@ -87,7 +134,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       const fd = await req.formData().catch(() => null);
       try {
         const s = await consumeMagicLink(env, req, fd?.get("token"));
-        return new Response(null, { status: 303, headers: { location: "/dashboard", "set-cookie": sessionCookie(s.token, s.max_age), "cache-control": "no-store" } });
+        const loc = s.claimed_draft_id ? `/claim?draft=${encodeURIComponent(s.claimed_draft_id)}` : "/dashboard";
+        return new Response(null, { status: 303, headers: { location: loc, "set-cookie": sessionCookie(s.token, s.max_age), "cache-control": "no-store" } });
       } catch (e) {
         if (e instanceof HttpError) return html(errorPage(env, e.message), e.status);
         throw e;
@@ -100,7 +148,9 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     if (method === "POST") assertSameOriginPost(req);
     if (method === "POST" && pathname === "/api/auth/magic-link") {
       const b = await body(req);
-      const r = await requestMagicLink(env, req, b.email);
+      let claimDraftId: string | undefined;
+      if (b.draft !== undefined || b.t !== undefined) claimDraftId = (await checkClaim(env, b.draft, b.t)).id;
+      const r = await requestMagicLink(env, req, b.email, { claimDraftId });
       // Emails with no pjrny.com (Odoo) account get 404 signup_required from requestMagicLink. Delivery status is in the audit log.
       if (r.throttled) return json({ ok: false, error: "throttled", throttled: true, message: "Too many sign-in link requests. Wait 15 minutes and try again." }, 429);
       return json({
@@ -114,7 +164,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     if (method === "POST" && pathname === "/api/auth/magic/verify") {
       const b = await body(req);
       const s = await consumeMagicLink(env, req, b.token);
-      return json({ ok: true, token: s.token, expires_at: s.expires_at, first_time: s.first_time, organizer: publicOrganizer(s.organizer) }, 200, { "set-cookie": sessionCookie(s.token, s.max_age) });
+      return json({ ok: true, token: s.token, expires_at: s.expires_at, first_time: s.first_time, claimed_draft_id: s.claimed_draft_id, organizer: publicOrganizer(s.organizer) }, 200, { "set-cookie": sessionCookie(s.token, s.max_age) });
     }
     if (method === "POST" && pathname === "/api/auth/pin") {
       const b = await body(req);
@@ -149,6 +199,23 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       await audit(env, { organizerId: org.id, action: "auth.pin_set", ip: clientIp(req) });
       return json({ ok: true });
     }
+    if (method === "POST" && p === "/api/drafts") return json(await saveOrganizerDraft(env, req, org, await readDraftBody(req)), 201);
+    const dm = /^\/api\/drafts\/(drf_[A-Za-z0-9_-]{8,40})(\/claim|\/create)?$/.exec(p);
+    if (dm) {
+      const [, draftId, dsub = ""] = dm;
+      if (method === "GET" && dsub === "") return json(await getOwnDraftPublic(env, org, draftId));
+      if (method === "POST" && dsub === "/claim") {
+        const b = await body(req);
+        await claimWithToken(env, req, org, draftId, b.claim_token);
+        return json(await getOwnDraftPublic(env, org, draftId));
+      }
+      if (method === "POST" && dsub === "/create") {
+        const b = await req.json().catch(() => ({}));
+        const r = await createFromDraft(env, req, org, draftId, { publish: (b as any)?.publish === true });
+        return json(r, r.reused ? 200 : 201);
+      }
+    }
+    if (p.startsWith("/api/drafts")) throw new HttpError(404, "Draft not found", "not_found");
     if (method === "GET" && p === "/api/events") return json(await listEvents(env, org));
     if (method === "POST" && p === "/api/events") return json(await createEvent(env, req, org, await readEventBody(req)), 201);
 
@@ -245,14 +312,17 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       const b = await body(req);
       const email = normalizeEmail(b.email);
       const org = await getOrganizerByEmail(env, email);
+      const claimDraftId = b.draft !== undefined || b.t !== undefined ? (await checkClaim(env, b.draft, b.t)).id : null;
       if (!org) {
         const acct = await findOdooAccount(env, email);
         if (!acct) throw new HttpError(404, SIGNUP_REQUIRED_MESSAGE, "signup_required");
         const token = await issueSignupToken(env, email, acct);
+        if (claimDraftId) await linkDraftToAuthToken(env, await sha256Hex(token), claimDraftId);
         await audit(env, { action: "admin.signup_link_minted", odooModel: "res.users", odooId: acct.user_id, detail: { email, odoo_partner_id: acct.partner_id, portal: acct.portal, website_id: acct.website_id }, ip: clientIp(req) });
         return json({ ok: true, pending_signup: true, odoo_account: { user_id: acct.user_id, partner_id: acct.partner_id, portal: acct.portal, website_id: acct.website_id, company_id: acct.company_id, pjrny: acct.pjrny, match: acct.match }, token, link: `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}` });
       }
       const token = await issueMagicToken(env, org.id);
+      if (claimDraftId) await linkDraftToAuthToken(env, await sha256Hex(token), claimDraftId);
       await audit(env, { organizerId: org.id, action: "admin.magic_link_minted", ip: clientIp(req) });
       return json({ ok: true, token, link: `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}` });
     }
@@ -262,6 +332,14 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
       const email = normalizeEmail(url.searchParams.get("email"));
       const org = await getOrganizerByEmail(env, email);
       return json({ ok: true, email, organizer: publicOrganizer(org), odoo_account: await findOdooAccount(env, email) });
+    }
+
+    /** Test helper: force-expire an unclaimed anonymous draft (smoke test for the expired-claim path). */
+    if (method === "POST" && pathname === "/api/admin/drafts/expire") {
+      const b = await body(req);
+      const r = await env.DB.prepare("UPDATE drafts SET expires_at = datetime('now', '-1 minute') WHERE id = ? AND organizer_id IS NULL RETURNING id").bind(String(b.draft_id ?? "")).first();
+      if (!r) throw new HttpError(404, "No unclaimed draft with that id", "not_found");
+      return json({ ok: true, draft_id: b.draft_id, expired: true });
     }
 
     if (method === "GET" && pathname === "/api/admin/audit") {

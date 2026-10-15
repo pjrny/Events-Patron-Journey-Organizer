@@ -1,0 +1,168 @@
+{
+  "at": "2026-10-15T00:38:54.362Z",
+  "base": "https://events-patronjourney.message-0ad.workers.dev",
+  "passed": 39,
+  "total": 39,
+  "archived": [
+    21,
+    22
+  ],
+  "results": [
+    {
+      "name": "health",
+      "ok": true
+    },
+    {
+      "name": "CORS preflight from www.pjrny.com allowed",
+      "ok": true
+    },
+    {
+      "name": "POST /api/drafts from other origin -> 403",
+      "ok": true
+    },
+    {
+      "name": "organizer API sends no CORS headers",
+      "ok": true
+    },
+    {
+      "name": "missing name -> 400 invalid_draft",
+      "ok": true
+    },
+    {
+      "name": "owner field in payload -> 400",
+      "ok": true
+    },
+    {
+      "name": "end before start -> 400",
+      "ok": true
+    },
+    {
+      "name": "lineup outside event -> 400",
+      "ok": true
+    },
+    {
+      "name": "wrong version -> 400",
+      "ok": true
+    },
+    {
+      "name": "> 1 MB -> 413",
+      "ok": true
+    },
+    {
+      "name": "anonymous draft saved -> 201 {draft_id, claim_token}",
+      "ok": true
+    },
+    {
+      "name": "magic-link with wrong claim token -> 404 invalid_claim",
+      "ok": true
+    },
+    {
+      "name": "GET /claim with wrong token shows error",
+      "ok": true
+    },
+    {
+      "name": "GET /claim signed out shows sign-in + pjrny.com signup steps",
+      "ok": true
+    },
+    {
+      "name": "expired anonymous draft -> 410 expired",
+      "ok": true
+    },
+    {
+      "name": "sign-in link minted carrying the draft",
+      "ok": true
+    },
+    {
+      "name": "verify -> 303 back to /claim?draft=… with session",
+      "ok": true
+    },
+    {
+      "name": "draft now owned by organizer (forecast stored)",
+      "ok": true
+    },
+    {
+      "name": "claim token cannot be reused after claim -> 404",
+      "ok": true
+    },
+    {
+      "name": "draft read without sign-in -> 401",
+      "ok": true
+    },
+    {
+      "name": "cookie create from other origin -> 403 csrf",
+      "ok": true
+    },
+    {
+      "name": "PIN login (bearer for create)",
+      "ok": true
+    },
+    {
+      "name": "create from claimed draft -> 201 {odoo_event_id, dashboard_url, public_url}",
+      "ok": true
+    },
+    {
+      "name": "create again is idempotent (same event, 200 reused)",
+      "ok": true
+    },
+    {
+      "name": "anon-claim: Odoo name/tz/capacity/venue",
+      "ok": true
+    },
+    {
+      "name": "anon-claim: tickets GA + pay-at-door names kept, all $0, max=capacity",
+      "ok": true
+    },
+    {
+      "name": "anon-claim: lineup -> tracks [\"Opener DJ\",\"Headliner\"]",
+      "ok": true
+    },
+    {
+      "name": "anon-claim: tags (auto-created where missing)",
+      "ok": true
+    },
+    {
+      "name": "anon-claim: forecast not sent to Odoo",
+      "ok": true
+    },
+    {
+      "name": "signed-in draft saved -> 201 {draft_id}",
+      "ok": true
+    },
+    {
+      "name": "signed-in draft readable by owner",
+      "ok": true
+    },
+    {
+      "name": "create from signed-in draft -> 201",
+      "ok": true
+    },
+    {
+      "name": "signed-in (blank lineup): Odoo name/tz/capacity/venue",
+      "ok": true
+    },
+    {
+      "name": "signed-in (blank lineup): tickets GA + pay-at-door names kept, all $0, max=capacity",
+      "ok": true
+    },
+    {
+      "name": "signed-in (blank lineup): lineup -> tracks [\"Smoke Draft Signed-in 202610150038\"]",
+      "ok": true
+    },
+    {
+      "name": "signed-in (blank lineup): tags (auto-created where missing)",
+      "ok": true
+    },
+    {
+      "name": "signed-in (blank lineup): forecast not sent to Odoo",
+      "ok": true
+    },
+    {
+      "name": "event 21 archived + unpublished",
+      "ok": true
+    },
+    {
+      "name": "event 22 archived + unpublished",
+      "ok": true
+    }
+  ]
+}

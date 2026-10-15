@@ -2,8 +2,9 @@ import type { Env } from "./env";
 import { HttpError } from "./http";
 import schema0001 from "../migrations/0001_init.sql";
 import schema0002 from "../migrations/0002_signup_links.sql";
+import schema0003 from "../migrations/0003_drafts.sql";
 
-const schemaSql = [schema0001, schema0002].join("\n;\n");
+const schemaSql = [schema0001, schema0002, schema0003].join("\n;\n");
 
 let schemaReady = false;
 
@@ -26,7 +27,7 @@ export async function ensureSchema(env: Env): Promise<void> {
 }
 
 export async function tableCounts(env: Env): Promise<Record<string, number>> {
-  const tables = ["organizers", "organizer_events", "sessions", "magic_links", "signup_links", "login_attempts", "audit_logs"];
+  const tables = ["organizers", "organizer_events", "sessions", "magic_links", "signup_links", "drafts", "auth_link_drafts", "login_attempts", "audit_logs"];
   const out: Record<string, number> = {};
   for (const t of tables) {
     const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first<{ n: number }>();

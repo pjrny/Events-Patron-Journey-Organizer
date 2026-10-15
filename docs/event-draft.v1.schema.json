@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pjrny/Events-Patron-Journey-Organizer/blob/main/docs/event-draft.v1.schema.json",
+  "title": "Patron Journey event draft v1 (Festival Forecaster -> Organizer Worker)",
+  "description": "Smallest payload that creates an Odoo event through the Organizer Worker. The owner is NEVER in the payload: it always comes from the signed-in session. Server-side validation in src/drafts.ts is authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "name", "start", "end", "venue", "capacity"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": "event-draft.v1" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "start": { "type": "string", "description": "Local wall clock in `timezone` (YYYY-MM-DDTHH:MM[:SS]) or ISO 8601 with Z/offset.", "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}" },
+    "end": { "type": "string", "description": "Same format as start; must be after start.", "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}" },
+    "timezone": { "type": "string", "default": "America/Chicago", "description": "IANA timezone name." },
+    "venue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "street": { "type": "string", "maxLength": 200 },
+        "city": { "type": "string", "maxLength": 100 },
+        "state": { "type": "string", "maxLength": 60, "description": "US state code or name." },
+        "zip": { "type": "string", "maxLength": 20 }
+      }
+    },
+    "capacity": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "description": { "type": "string", "maxLength": 20000, "description": "Plain text; blank lines become paragraphs." },
+    "tags": {
+      "type": "array", "maxItems": 15, "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[\\p{L}\\p{N} &'/+.-]+$" },
+      "description": "Free-form; missing Odoo event.tag records are auto-created."
+    },
+    "image": { "type": "string", "description": "https URL (fetched by the Worker at create time), data:image/(png|jpeg|webp|gif);base64,..., or raw base64. Max 5 MB decoded." },
+    "tickets": {
+      "type": "array", "maxItems": 10,
+      "description": "Extra ticket types on top of the always-created free General Admission. Price is forced to 0 by the Worker; seats_max = capacity. Names are kept exactly as given, e.g. \"GA – Pay at Door $199\".",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "price": { "type": "number", "minimum": 0, "description": "Accepted for the forecast's reference; ignored (Odoo price is always 0)." },
+          "max": { "type": "integer", "minimum": 1, "description": "Accepted; v1 always uses capacity." }
+        }
+      }
+    },
+    "lineup": {
+      "type": "array", "maxItems": 100,
+      "description": "Acts with set times (same format/timezone as start). Each named act becomes an event.track and must fall inside start..end. Rows with a blank or missing name are skipped; if no named acts remain, one default track named after the event spans start..end.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["start", "end"],
+        "properties": {
+          "name": { "type": ["string", "null"], "maxLength": 200 },
+          "start": { "type": "string" },
+          "end": { "type": "string" }
+        }
+      }
+    },
+    "forecast": { "type": "object", "description": "Opaque simulator output (budget, P&L, Monte Carlo). Stored in D1 with the draft only; never sent to Odoo." }
+  },
+  "not": { "anyOf": [
+    { "required": ["owner"] }, { "required": ["owner_id"] }, { "required": ["organizer"] }, { "required": ["organizer_id"] },
+    { "required": ["organizer_email"] }, { "required": ["email"] }, { "required": ["odoo_partner_id"] }, { "required": ["user_id"] }
+  ] }
+}

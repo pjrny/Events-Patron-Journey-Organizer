@@ -288,6 +288,24 @@ async function syncTickets(c: Ctx, eventId: number, capacity: number, flags: { p
   return result;
 }
 
+async function addCustomTickets(c: Ctx, eventId: number, capacity: number, list: { name: string }[]) {
+  const existing = await c.o.call<any[]>("event.event.ticket", "search_read", { domain: [["event_id", "=", eventId]], fields: ["id", "name", "product_id"] });
+  const productId = m2oId(existing[0]?.product_id) ?? Number(c.env.ODOO_TICKET_PRODUCT_ID || 36);
+  const have = new Set(existing.map((t) => String(t.name).trim().toLowerCase()));
+  const out: { id: number; name: string; price: 0; seats_max: number }[] = [];
+  for (const t of list) {
+    const name = str(t.name, 120);
+    if (!name || have.has(name.toLowerCase())) continue;
+    have.add(name.toLowerCase());
+    const id = await create(c.o, "event.event.ticket", {
+      event_id: eventId, name, description: "Register free online. Pay at the door.", price: 0, product_id: productId, seats_max: capacity,
+    });
+    out.push({ id, name, price: 0, seats_max: capacity });
+  }
+  await auditM(c, "tickets.custom_added", "event.event.ticket", undefined, eventId, { tickets: out });
+  return out;
+}
+
 async function ensureSponsor(c: Ctx, eventId: number, templateId: number) {
   const partnerId = Number(c.env.PJ_SPONSOR_PARTNER_ID || 20);
   const typeId = Number(c.env.PJ_SPONSOR_TYPE_ID || 4);
@@ -360,8 +378,23 @@ async function archiveInOdoo(o: OdooClient, eventId: number) {
 
 // ---------------- public operations ----------------
 
-export async function createEvent(env: Env, req: Request, org: Organizer, body: EventInput) {
+/** Extra create options used by create-from-draft (simulator). Not reachable from the plain /api/events body. */
+export interface CreateExtras {
+  /** Custom tickets created in addition to GA. Price is ALWAYS forced to 0; seats_max = capacity. Names kept as given. */
+  customTickets?: { name: string }[];
+  /** Lineup -> one event.track per act (replaces the default "Main Event" track when non-empty). */
+  lineup?: { name: string; start?: string; end?: string }[];
+  /** Name of the single default track (spanning start-end) when there is no lineup. Defaults to "Main Event". */
+  defaultTrackName?: string;
+  /** Free-form tags (auto-created in Odoo) instead of the ALLOWED_TAGS allow-list. */
+  freeTags?: string[];
+  /** Called with the new Odoo id right after ownership is recorded (before patching). */
+  onCopied?: (eventId: number) => Promise<void>;
+}
+
+export async function createEvent(env: Env, req: Request, org: Organizer, body: EventInput, extras: CreateExtras = {}) {
   const n = normalizeInput(body, { creating: true });
+  if (extras.freeTags?.length) n.tags = [...new Set([...(n.tags ?? []), ...extras.freeTags])];
   const c: Ctx = { env, req, org, o: odoo(env), warnings: [] };
   const templateId = Number(env.ODOO_TEMPLATE_EVENT_ID || 14);
 
@@ -381,6 +414,7 @@ export async function createEvent(env: Env, req: Request, org: Organizer, body: 
     .bind(org.id, eventId, site.websiteId)
     .run();
   await auditM(c, "event.created", "event.event", eventId, eventId, { template_id: templateId, name: n.name, website_id: site.websiteId });
+  if (extras.onCopied) await extras.onCopied(eventId);
 
   try {
     const vals: Record<string, unknown> = {
@@ -402,9 +436,19 @@ export async function createEvent(env: Env, req: Request, org: Organizer, body: 
     await auditM(c, "event.updated", "event.event", eventId, eventId, { fields: Object.keys(vals) });
 
     const tickets = await syncTickets(c, eventId, n.capacity!, n.tickets!, true);
+    const custom = extras.customTickets?.length ? await addCustomTickets(c, eventId, n.capacity!, extras.customTickets) : [];
     const sponsor = await ensureSponsor(c, eventId, templateId);
     const locationId = venue ? await ensureTrackLocation(c, venue.name) : null;
-    const track = await addTrack(c, eventId, { speaker: n.speaker, tz: n.tz, dateBegin: n.dateBegin!, dateEnd: n.dateEnd!, locationId, fallbackName: "Main Event" });
+    let track: unknown;
+    if (extras.lineup?.length) {
+      const tracks = [];
+      for (const act of extras.lineup) {
+        tracks.push(await addTrack(c, eventId, { speaker: { name: act.name, start: act.start, end: act.end }, tz: n.tz, dateBegin: n.dateBegin!, dateEnd: n.dateEnd!, locationId, fallbackName: act.name }));
+      }
+      track = tracks;
+    } else {
+      track = await addTrack(c, eventId, { speaker: n.speaker, tz: n.tz, dateBegin: n.dateBegin!, dateEnd: n.dateEnd!, locationId, fallbackName: extras.defaultTrackName || "Main Event" });
+    }
 
     let image: unknown = null;
     if (n.image) {
@@ -412,7 +456,7 @@ export async function createEvent(env: Env, req: Request, org: Organizer, body: 
     }
     if (n.publish) await setPublished(c, eventId, true);
 
-    return { ok: true, odoo_event_id: eventId, venue, tickets, sponsor, track, image, published: !!n.publish, warnings: c.warnings, event: await eventSummary(env, eventId) };
+    return { ok: true, odoo_event_id: eventId, venue, tickets: { ...tickets, custom }, sponsor, track, image, published: !!n.publish, warnings: c.warnings, event: await eventSummary(env, eventId) };
   } catch (e) {
     // Roll back by ARCHIVING (never deleting) the half-built copy.
     await archiveInOdoo(c.o, eventId).catch(() => undefined);

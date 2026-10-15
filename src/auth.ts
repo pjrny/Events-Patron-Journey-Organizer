@@ -4,6 +4,7 @@ import { HttpError, clientIp } from "./http";
 import { hashPin, verifyPin, randomToken, sha256Hex, signJwt, verifyJwt, type JwtClaims } from "./crypto";
 import { audit } from "./db";
 import { sendOdooMail, type MailResult } from "./mail";
+import { linkDraftToAuthToken, claimFromAuthToken } from "./drafts";
 import { findOdooAccount, SIGNUP_REQUIRED_MESSAGE, PIN_NOT_SET_MESSAGE, type OdooAccount } from "./onboarding";
 
 export const SESSION_COOKIE = "pj_session";
@@ -231,6 +232,7 @@ export async function requestMagicLink(
   env: Env,
   req: Request,
   emailRaw: unknown,
+  opts: { claimDraftId?: string } = {},
 ): Promise<{ mail?: MailResult; known: boolean; first_time?: boolean; throttled?: boolean }> {
   const email = normalizeEmail(emailRaw);
   const ip = clientIp(req);
@@ -247,6 +249,7 @@ export async function requestMagicLink(
     await recordAttempt(env, email, "magic_request", ip, !!org.active);
     if (!org.active) throw new HttpError(403, "This organizer account is disabled. Contact Patron Journey for help.", "inactive");
     const token = await issueMagicToken(env, org.id);
+    if (opts.claimDraftId) await linkDraftToAuthToken(env, await sha256Hex(token), opts.claimDraftId);
     const link = `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}`;
     const mail = await sendOdooMail(env, { to: org.email, subject: "Your Patron Journey organizer sign-in link", html: magicLinkHtml(org.display_name, link, ttl, false) });
     await audit(env, { organizerId: org.id, action: "auth.magic_link_sent", odooModel: "mail.mail", odooId: mail.mail_id ?? undefined, detail: { mail_status: mail.status, mail_detail: mail.detail }, ip });
@@ -260,6 +263,7 @@ export async function requestMagicLink(
     throw new HttpError(404, SIGNUP_REQUIRED_MESSAGE, "signup_required");
   }
   const token = await issueSignupToken(env, email, acct);
+  if (opts.claimDraftId) await linkDraftToAuthToken(env, await sha256Hex(token), opts.claimDraftId);
   const link = `${baseUrl(env, req)}/auth/magic?token=${encodeURIComponent(token)}`;
   const mail = await sendOdooMail(env, { to: email, subject: "Your Patron Journey organizer sign-in link", html: magicLinkHtml(acct.name, link, ttl, true) });
   await audit(env, {
@@ -331,7 +335,8 @@ export async function consumeMagicLink(env: Env, req: Request, tokenRaw: unknown
   }
   if (!org || !org.active) throw new HttpError(401, "Account is not active", "inactive");
   await recordAttempt(env, org.email, "magic_link", clientIp(req), true);
-  return { organizer: org, first_time: firstTime, ...(await createSession(env, req, org, "magic_link")) };
+  const claimedDraftId = await claimFromAuthToken(env, req, org, hash);
+  return { organizer: org, first_time: firstTime, claimed_draft_id: claimedDraftId, ...(await createSession(env, req, org, "magic_link")) };
 }
 
 // ---------- PIN ----------
