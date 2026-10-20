@@ -17,6 +17,7 @@ import { requireOwnership } from "./db";
 import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "./dashboard";
 import { checkIn, listAttendees } from "./checkin";
 import { claimPage } from "./dashboard";
+import { rfidPage } from "./rfid";
 import {
   readDraftBody, saveAnonymousDraft, saveOrganizerDraft, getOwnDraftPublic, createFromDraft, checkClaim, claimWithToken, linkDraftToAuthToken,
 } from "./drafts";
@@ -123,6 +124,9 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     }
     return html(claimPage(env, draftId, t, error), error && !draftId ? 400 : 200);
   }
+
+  // ---------- RFID planner (public) ----------
+  if (method === "GET" && (pathname === "/rfid" || pathname === "/rfid/")) return html(rfidPage());
 
   // ---------- Dashboard pages ----------
   if (method === "GET" && (pathname === "/dashboard/checkin" || pathname === "/dashboard/checkin/")) return html(checkinPage(env));
