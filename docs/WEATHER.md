@@ -40,7 +40,7 @@ All shares are **years hit / years checked** (shown as "4 of last 5 years"), not
 | holiday | 40 if a public holiday falls on event days ±1 |
 | competition | 20 per similar event, cap 100 (only when directory exists) |
 
-Composite = 0.35·rain + 0.20·storm + 0.15·wind + 0.15·temp + 0.05·holiday (+ 0.10·competition), renormalized over present factors.
+Composite = 0.30·rain + 0.20·storm + 0.15·wind + 0.25·temp + 0.05·holiday (+ 0.10·competition), renormalized over present factors.
 Labels: <20 Low, <40 Moderate, <60 Elevated, ≥60 High. With a live forecast, a forecast-flagged hazard is raised to ≥80%,
 an unflagged one is halved.
 

@@ -206,7 +206,7 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
   const tempScore = Math.max(hotP, coldP);
   const holidayScore = hol.list.length ? 40 : 0;
   const compScore = comp.value ? Math.min(100, comp.value.count * 20) : null;
-  const parts: [number, number][] = [[rainP, 0.35], [stormP, 0.2], [windScore, 0.15], [tempScore, 0.15], [holidayScore, 0.05]];
+  const parts: [number, number][] = [[rainP, 0.3], [stormP, 0.2], [windScore, 0.15], [tempScore, 0.25], [holidayScore, 0.05]];
   if (compScore != null) parts.push([compScore, 0.1]);
   const wsum = parts.reduce((a, [, w]) => a + w, 0);
   const score = Math.round(parts.reduce((a, [s, w]) => a + s * w, 0) / wsum);
@@ -243,7 +243,7 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
   if (holdY) feed.push(`Gusts over ${GUST_HOLD} km/h in ${of(holdY)}: stage hold risk`);
   if (hotY) feed.push(`Over ${unit === "F" ? "90°F" : "32°C"} in ${of(hotY)}: bar sales up, medical load up`);
   if (coldY) feed.push(`Below ${unit === "F" ? "41°F" : "5°C"} at night in ${of(coldY)}: bring warming tents`);
-  if (score < 20 && !hotY && !coldY) feed.push(`Typically ${t(avgHi)} and dry: sunny and ${t(avgHi)}, perfect`);
+  if (rainP <= 20 && stormP === 0 && holdP === 0 && !hotY && !coldY) feed.push(`Typically ${t(avgHi)} and dry: sunny and ${t(avgHi)}, perfect`);
   if (hol.list.length) feed.push(`${hol.list[0].name} on ${hol.list[0].date}: attendance boost, staffing costs up`);
 
   // Backup plan (rules)
