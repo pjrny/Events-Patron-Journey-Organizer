@@ -42,7 +42,10 @@
     "ODOO_TICKET_PRODUCT_ID": "36",
     // Organizer self-service: first verified sign-in auto-creates the organizer when the email has an
     // Odoo res.users account; users of this website (2 = pjrny.com) are preferred.
-    "ORGANIZER_SIGNUP_WEBSITE_ID": "2"
+    "ORGANIZER_SIGNUP_WEBSITE_ID": "2",
+    // /weather: Open-Meteo free tier is NON-COMMERCIAL. Set to "commercial" and add secret OPEN_METEO_API_KEY
+    // (wrangler secret put OPEN_METEO_API_KEY) once a paid plan is bought; switches to customer-* endpoints.
+    "OPEN_METEO_PLAN": "free"
   },
 
   // D1 = ownership + sessions + audit ONLY. Odoo stays the source of truth.

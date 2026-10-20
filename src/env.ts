@@ -23,6 +23,11 @@ export interface Env {
   /** Website whose users are preferred when auto-creating organizers (2 = pjrny.com). */
   ORGANIZER_SIGNUP_WEBSITE_ID?: string;
 
+  /** "free" (non-commercial Open-Meteo endpoints) or "commercial" (customer-* endpoints, needs OPEN_METEO_API_KEY secret). */
+  OPEN_METEO_PLAN?: string;
+  OPEN_METEO_API_KEY?: string; // secret, optional
+  CALENDARIFIC_KEY?: string; // secret, optional
+
   // Secrets (Cloudflare dashboard / `wrangler secret put`). Never logged, never returned.
   ADMIN_TOKEN?: string;
   JWT_SECRET?: string;
@@ -35,6 +40,7 @@ export interface Env {
 
 /** Names of non-secret vars declared in wrangler.jsonc (used to tell secrets apart from vars by NAME only). */
 export const PLAIN_VARS = new Set([
+  "OPEN_METEO_PLAN",
   "APP_ENV",
   "ODOO_URL",
   "ODOO_DB",

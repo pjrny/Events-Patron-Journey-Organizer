@@ -3,8 +3,9 @@ import { HttpError } from "./http";
 import schema0001 from "../migrations/0001_init.sql";
 import schema0002 from "../migrations/0002_signup_links.sql";
 import schema0003 from "../migrations/0003_drafts.sql";
+import schema0004 from "../migrations/0004_weather.sql";
 
-const schemaSql = [schema0001, schema0002, schema0003].join("\n;\n");
+const schemaSql = [schema0001, schema0002, schema0003, schema0004].join("\n;\n");
 
 let schemaReady = false;
 

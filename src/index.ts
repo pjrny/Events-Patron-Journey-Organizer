@@ -18,6 +18,8 @@ import { shell, dashboardPage, magicConfirmPage, errorPage, checkinPage } from "
 import { checkIn, listAttendees } from "./checkin";
 import { claimPage } from "./dashboard";
 import { rfidPage } from "./rfid";
+import { weatherPage } from "./weather_page";
+import { weatherRisk, getWeatherResult } from "./weather";
 import {
   readDraftBody, saveAnonymousDraft, saveOrganizerDraft, getOwnDraftPublic, createFromDraft, checkClaim, claimWithToken, linkDraftToAuthToken,
 } from "./drafts";
@@ -127,6 +129,17 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
 
   // ---------- RFID planner (public) ----------
   if (method === "GET" && (pathname === "/rfid" || pathname === "/rfid/")) return html(rfidPage());
+
+  // ---------- Will It Rain On My Event? (public) ----------
+  if (method === "GET" && (pathname === "/weather" || pathname === "/weather/")) return html(weatherPage(url.origin));
+  if (method === "GET" && pathname.startsWith("/weather/r/")) {
+    const r = await getWeatherResult(env, decodeURIComponent(pathname.slice("/weather/r/".length)));
+    return r ? html(weatherPage(url.origin, r)) : html(weatherPage(url.origin), 404);
+  }
+  if (method === "GET" && pathname === "/api/weather/risk") {
+    const q = url.searchParams;
+    return json(await weatherRisk(env, req, q.get("address") ?? "", q.get("date") ?? "", Number(q.get("days") ?? "1")));
+  }
 
   // ---------- Dashboard pages ----------
   if (method === "GET" && (pathname === "/dashboard/checkin" || pathname === "/dashboard/checkin/")) return html(checkinPage(env));
