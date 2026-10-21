@@ -50,7 +50,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px;borde
  <button class="btn" id="go" type="submit">Check my dates</button>
 </form></div>
 <div id="out"></div>
-<p class="small">Weather: Open-Meteo (historical reanalysis + forecast). Geocoding: © OpenStreetMap contributors via Nominatim. Holidays: Nager.Date. Results are based on a small 5-year sample for the same dates, not a guarantee.</p>
+<p class="small">Weather: Open-Meteo (historical reanalysis + forecast). Geocoding: © OpenStreetMap contributors via Nominatim. Holidays: Nager.Date. Results are based on a small 5-year sample for the same dates, not a guarantee. Competing festival locations use <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a> data (CC BY 4.0).</p>
 </main>
 <script>
 var PRE = ${data};

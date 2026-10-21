@@ -27,6 +27,12 @@ export interface Env {
   OPEN_METEO_PLAN?: string;
   OPEN_METEO_API_KEY?: string; // secret, optional
   CALENDARIFIC_KEY?: string; // secret, optional
+  // /talent plug-in adapters (secrets, optional; each turns its source on)
+  LASTFM_KEY?: string;
+  SEATGEEK_CLIENT_ID?: string;
+  TICKETMASTER_KEY?: string;
+  BANDSINTOWN_APP_ID?: string;
+  GNEWS_KEY?: string;
 
   // Secrets (Cloudflare dashboard / `wrangler secret put`). Never logged, never returned.
   ADMIN_TOKEN?: string;

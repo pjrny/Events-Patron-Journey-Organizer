@@ -41,7 +41,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px;borde
  <div style="grid-column:1/-1"><label for="lineup">Lineup (optional, one artist per line)</label><textarea id="lineup" rows="2" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:8px"></textarea></div>
 </form></div>
 <div id="out"></div>
-<p class="small">Data: Patron Journey festival directory (26,780 listings; dates mostly from 2018 editions, projected onto your year). City-level locations. Threat = proximity × date overlap × genre × size × lineup overlap.</p>
+<p class="small">Data: Patron Journey festival directory (26,780 listings; dates mostly from 2018 editions, projected onto your year). City-level locations. Threat = proximity × date overlap × genre × size × lineup overlap. Festival locations use <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a> data (CC BY 4.0).</p>
 </main>
 <script>
 function $(i){return document.getElementById(i)}

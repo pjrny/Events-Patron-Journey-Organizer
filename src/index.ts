@@ -3,6 +3,8 @@
 import { festivalsApi } from "./festivals";
 import { competitorsApi } from "./competitors";
 import { competitorsPage } from "./competitors_page";
+import { talentPage } from "./talent_page";
+import { talentApi, getTalentResult } from "./talent";
 import { type Env, secretNames } from "./env";
 import { json, html, errorResponse, HttpError, clientIp } from "./http";
 import { timingSafeEqual } from "./crypto";
@@ -146,6 +148,13 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
 
   if (method === "GET" && (pathname === "/competitors" || pathname === "/competitors/")) return html(competitorsPage());
   if (method === "GET" && pathname === "/api/competitors") return json(await competitorsApi(env, req, url, geocode));
+  // ---------- Talent Draw Estimator (public) ----------
+  if (method === "GET" && (pathname === "/talent" || pathname === "/talent/")) return html(talentPage(url.origin));
+  if (method === "GET" && pathname.startsWith("/talent/r/")) {
+    const r = await getTalentResult(env, decodeURIComponent(pathname.slice("/talent/r/".length)));
+    return r ? html(talentPage(url.origin, r)) : html(talentPage(url.origin), 404);
+  }
+  if ((method === "GET" || method === "POST") && pathname === "/api/talent/draw") return json(await talentApi(env, req, url));
   if (method === "GET" && pathname === "/api/festivals") return json(await festivalsApi(env, req, url));
 
   // ---------- Dashboard pages ----------
