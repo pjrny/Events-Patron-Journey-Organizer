@@ -1,6 +1,8 @@
 // Patron Journey Event Organizer Platform - Worker entry.
 // Slice 2: organizer auth (magic link + PIN -> JWT), create/update/publish/archive events on Odoo.
 import { festivalsApi } from "./festivals";
+import { competitorsApi } from "./competitors";
+import { competitorsPage } from "./competitors_page";
 import { type Env, secretNames } from "./env";
 import { json, html, errorResponse, HttpError, clientIp } from "./http";
 import { timingSafeEqual } from "./crypto";
@@ -20,7 +22,7 @@ import { checkIn, listAttendees } from "./checkin";
 import { claimPage } from "./dashboard";
 import { rfidPage } from "./rfid";
 import { weatherPage } from "./weather_page";
-import { weatherRisk, getWeatherResult } from "./weather";
+import { weatherRisk, getWeatherResult, geocode } from "./weather";
 import {
   readDraftBody, saveAnonymousDraft, saveOrganizerDraft, getOwnDraftPublic, createFromDraft, checkClaim, claimWithToken, linkDraftToAuthToken,
 } from "./drafts";
@@ -142,6 +144,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     return json(await weatherRisk(env, req, q.get("address") ?? "", q.get("date") ?? "", Number(q.get("days") ?? "1")));
   }
 
+  if (method === "GET" && (pathname === "/competitors" || pathname === "/competitors/")) return html(competitorsPage());
+  if (method === "GET" && pathname === "/api/competitors") return json(await competitorsApi(env, req, url, geocode));
   if (method === "GET" && pathname === "/api/festivals") return json(await festivalsApi(env, req, url));
 
   // ---------- Dashboard pages ----------

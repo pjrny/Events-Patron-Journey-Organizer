@@ -7,7 +7,7 @@
 import type { Env } from "./env";
 import { HttpError, clientIp } from "./http";
 import { sha256Hex, randomToken } from "./crypto";
-import { festivalCompetition } from "./festivals";
+import { analyzeCompetition } from "./competitors";
 
 const UA = "PatronJourney-WeatherRisk/1.0 (+https://www.pjrny.com; info@pjrny.com)";
 const UNCACHED_PER_IP_PER_HOUR = 30;
@@ -33,7 +33,7 @@ async function getJson(url: string, timeoutMs = 9000): Promise<any> {
 }
 
 // ---------- Geocoding (Nominatim, cached, <=1 req/s) ----------
-type Geo = { lat: number; lon: number; display_name: string; city: string | null; state: string | null; country_code: string | null };
+export type Geo = { lat: number; lon: number; display_name: string; city: string | null; state: string | null; country_code: string | null };
 
 async function throttleNominatim(env: Env) {
   for (let i = 0; i < 4; i++) {
@@ -48,7 +48,7 @@ async function throttleNominatim(env: Env) {
   throw new HttpError(503, "Address lookup is busy. Try again in a few seconds.", "geocode_busy");
 }
 
-async function geocode(env: Env, address: string): Promise<Geo> {
+export async function geocode(env: Env, address: string): Promise<Geo> {
   const q = normQ(address);
   const hit = await env.DB.prepare("SELECT * FROM geocode_cache WHERE q = ?").bind(q).first<any>();
   if (hit) return { lat: hit.lat, lon: hit.lon, display_name: hit.display_name, city: hit.city, state: hit.state, country_code: hit.country_code };
@@ -117,12 +117,14 @@ async function holidays(env: Env, cc: string | null, start: Date, n: number) {
   return { list: out, notes };
 }
 
-// ---------- Competition (festival directory in D1) ----------
-async function competition(env: Env, g: Geo, start: Date) {
+// ---------- Competition (shared competitor-threat.v1 model) ----------
+async function competition(env: Env, g: Geo, start: Date, nDays: number) {
   const tbl = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='festival_directory'").first<{ name: string }>();
   if (!tbl) return { value: null, note: "Festival directory not loaded in D1 yet; competing events not checked." };
-  try { return { value: await festivalCompetition(env, g, start.getUTCMonth() + 1), note: null }; }
-  catch { return { value: null, note: "Festival directory lookup failed; competing events not checked." }; }
+  try {
+    const r = await analyzeCompetition(env, { lat: g.lat, lon: g.lon, city: g.city, country: g.country_code, start, days: nDays, month: null, genre: null, lineup: [] }, { limit: 25 });
+    return { value: { ...r, events: r.events.map((e: any) => ({ name: e.name, city: e.city, state: e.state, type: e.type, genre: e.genre, attendance: e.attendance, month: e.month, start_date: e.listed_start, end_date: e.listed_end, projected_start: e.projected_start, distance_km: e.distance_km, threat: e.threat })) }, note: null };
+  } catch { return { value: null, note: "Festival directory lookup failed; competing events not checked." }; }
 }
 
 // ---------- Core ----------
@@ -137,7 +139,7 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
   if (daysOut < -366 || daysOut > 730) throw new HttpError(400, "Pick a date within the next 2 years.", "invalid_date");
   if (!Number.isInteger(nDays) || nDays < 1 || nDays > 5) throw new HttpError(400, "days must be 1 to 5", "invalid_days");
 
-  const cacheKey = `v2|${normQ(address)}|${dateStr}|${nDays}`;
+  const cacheKey = `v4|${normQ(address)}|${dateStr}|${nDays}`;
   const cached = await env.DB.prepare(`SELECT id, payload FROM weather_results WHERE cache_key = ? AND created_at > datetime('now', '-${CACHE_HOURS} hours') ORDER BY created_at DESC LIMIT 1`).bind(cacheKey).first<{ id: string; payload: string }>();
   if (cached) return { ...JSON.parse(cached.payload), cached: true };
 
@@ -195,14 +197,14 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
 
   const hol = await holidays(env, g.country_code, start, nDays);
   notes.push(...hol.notes);
-  const comp = await competition(env, g, start);
+  const comp = await competition(env, g, start, nDays);
   if (comp.note) notes.push(comp.note);
 
   // Composite (weights renormalized when competition is unknown)
   const windScore = Math.min(100, holdP + 0.5 * Math.max(0, cautionP - holdP));
   const tempScore = Math.max(hotP, coldP);
   const holidayScore = hol.list.length ? 40 : 0;
-  const compScore = comp.value ? Math.min(100, comp.value.count * 20) : null;
+  const compScore = comp.value ? comp.value.competition_score : null;
   const parts: [number, number][] = [[rainP, 0.3], [stormP, 0.2], [windScore, 0.15], [tempScore, 0.25], [holidayScore, 0.05]];
   if (compScore != null) parts.push([compScore, 0.1]);
   const wsum = parts.reduce((a, [, w]) => a + w, 0);
