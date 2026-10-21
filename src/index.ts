@@ -1,5 +1,6 @@
 // Patron Journey Event Organizer Platform - Worker entry.
 // Slice 2: organizer auth (magic link + PIN -> JWT), create/update/publish/archive events on Odoo.
+import { festivalsApi } from "./festivals";
 import { type Env, secretNames } from "./env";
 import { json, html, errorResponse, HttpError, clientIp } from "./http";
 import { timingSafeEqual } from "./crypto";
@@ -140,6 +141,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     const q = url.searchParams;
     return json(await weatherRisk(env, req, q.get("address") ?? "", q.get("date") ?? "", Number(q.get("days") ?? "1")));
   }
+
+  if (method === "GET" && pathname === "/api/festivals") return json(await festivalsApi(env, req, url));
 
   // ---------- Dashboard pages ----------
   if (method === "GET" && (pathname === "/dashboard/checkin" || pathname === "/dashboard/checkin/")) return html(checkinPage(env));

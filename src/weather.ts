@@ -7,6 +7,7 @@
 import type { Env } from "./env";
 import { HttpError, clientIp } from "./http";
 import { sha256Hex, randomToken } from "./crypto";
+import { festivalCompetition } from "./festivals";
 
 const UA = "PatronJourney-WeatherRisk/1.0 (+https://www.pjrny.com; info@pjrny.com)";
 const UNCACHED_PER_IP_PER_HOUR = 30;
@@ -116,16 +117,12 @@ async function holidays(env: Env, cc: string | null, start: Date, n: number) {
   return { list: out, notes };
 }
 
-// ---------- Competition (optional festival directory) ----------
+// ---------- Competition (festival directory in D1) ----------
 async function competition(env: Env, g: Geo, start: Date) {
-  const tbl = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('festival_directory','festivals') LIMIT 1").first<{ name: string }>();
+  const tbl = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='festival_directory'").first<{ name: string }>();
   if (!tbl) return { value: null, note: "Festival directory not loaded in D1 yet; competing events not checked." };
-  try {
-    const month = start.getUTCMonth() + 1;
-    const rows = await env.DB.prepare(`SELECT name, city, month FROM ${tbl.name} WHERE lower(city) = lower(?) AND CAST(month AS INTEGER) = ? LIMIT 25`).bind(g.city ?? "", month).all<any>();
-    const list = (rows.results ?? []).map((r: any) => ({ name: r.name, city: r.city, month: Number(r.month) }));
-    return { value: { count: list.length, events: list, basis: "same city, same month" }, note: null };
-  } catch { return { value: null, note: "Festival directory table has an unexpected shape; competing events not checked." }; }
+  try { return { value: await festivalCompetition(env, g, start.getUTCMonth() + 1), note: null }; }
+  catch { return { value: null, note: "Festival directory lookup failed; competing events not checked." }; }
 }
 
 // ---------- Core ----------
@@ -140,7 +137,7 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
   if (daysOut < -366 || daysOut > 730) throw new HttpError(400, "Pick a date within the next 2 years.", "invalid_date");
   if (!Number.isInteger(nDays) || nDays < 1 || nDays > 5) throw new HttpError(400, "days must be 1 to 5", "invalid_days");
 
-  const cacheKey = `${normQ(address)}|${dateStr}|${nDays}`;
+  const cacheKey = `v2|${normQ(address)}|${dateStr}|${nDays}`;
   const cached = await env.DB.prepare(`SELECT id, payload FROM weather_results WHERE cache_key = ? AND created_at > datetime('now', '-${CACHE_HOURS} hours') ORDER BY created_at DESC LIMIT 1`).bind(cacheKey).first<{ id: string; payload: string }>();
   if (cached) return { ...JSON.parse(cached.payload), cached: true };
 
@@ -308,7 +305,7 @@ export async function weatherRisk(env: Env, req: Request, address: string, dateS
     simulator,
     links: { plan_free: "/dashboard", paid: env.PAID_UPGRADE_URL || "https://www.pjrny.com/#Contact-us" },
     notes: [...notes, "Based on a small 5-year sample, not a forecast" + (forecast ? " (live forecast blended in)." : "."), env.OPEN_METEO_PLAN === "commercial" ? "Weather data: Open-Meteo (commercial plan)." : "Weather data: Open-Meteo (free, non-commercial tier)."],
-    sources: ["Open-Meteo", "OpenStreetMap Nominatim", "Nager.Date", ...(env.CALENDARIFIC_KEY ? ["Calendarific"] : [])],
+    sources: ["Open-Meteo", "OpenStreetMap Nominatim", "Nager.Date", ...(comp.value ? ["Patron Journey festival directory"] : []), ...(env.CALENDARIFIC_KEY ? ["Calendarific"] : [])],
   };
   await env.DB.prepare("INSERT INTO weather_results (id, cache_key, payload, ip_hash) VALUES (?,?,?,?)").bind(id, cacheKey, JSON.stringify(result), ipHash).run();
   return result;
