@@ -1,0 +1,153 @@
+{
+  "id": "rfid_basic_scenario",
+  "label": "RFID / Cashless (Basic Scenario)",
+  "optional_addon": true,
+  "source": "Tool Basic Scenario Calculator \u2014 PRICES row 5 (headers rows 2\u20133)",
+  "source_path": "/home/box/agent-data/agents/54e0f354-7b55-494a-a94c-99b5d6756654/attachments/a122d54c21381c4b6640d93cc27a612a69fb331c2020ececa1677e7b84bf000d.xlsx",
+  "source_note": "Unit prices from Basic Scenario Calculator PRICES row only. NOT Master Budget. Additive optional opex for live forecast; reconcile at N0 forces this add-on OFF. Does not replace Master Budget ticketing C58. Cashless mode (closed/open/hybrid/none) is display context only in v1 \u2014 does not change unit prices. Consumer-paid fees are pass-through info only, not promoter opex.",
+  "consumer_passthrough": {
+    "ticket_fee_consumer": {
+      "label": "Consumer ticket fee (pass-through)",
+      "amount": 7.0,
+      "sheet": "AD2",
+      "note": "NOT promoter opex"
+    },
+    "fulfill_fee_consumer": {
+      "label": "Consumer fulfill fee (pass-through)",
+      "amount": 4.99,
+      "sheet": "AE2",
+      "note": "NOT promoter opex"
+    }
+  },
+  "catalog": [
+    {
+      "id": "ticketing_fee",
+      "label": "Ticketing (platform/ticket fee)",
+      "unit_price": 1.49,
+      "unit": "per_attendee",
+      "sheet": "M5 / M3",
+      "qty_rule": "N"
+    },
+    {
+      "id": "scanner",
+      "label": "Access-control scanner",
+      "unit_price": 125,
+      "unit": "each",
+      "sheet": "N5 / N3",
+      "qty_rule": "max(4, ceil(N/800))"
+    },
+    {
+      "id": "truss",
+      "label": "Truss",
+      "unit_price": 20,
+      "unit": "each",
+      "sheet": "O5 / O3",
+      "qty_rule": "scanners (1:1) or 0 if user clears"
+    },
+    {
+      "id": "registration_kiosk",
+      "label": "Registration station / kiosk (AC)",
+      "unit_price": 75,
+      "unit": "each",
+      "sheet": "P5 / P3",
+      "qty_rule": "max(2, ceil(N/2000))"
+    },
+    {
+      "id": "pos",
+      "label": "POS terminal",
+      "unit_price": 85,
+      "unit": "each",
+      "sheet": "Q5 / Q3",
+      "qty_rule": "max(4, ceil(N/400))"
+    },
+    {
+      "id": "platform_fee",
+      "label": "Platform fee(s)",
+      "unit_price": 1450,
+      "unit": "flat",
+      "sheet": "R5 / R3",
+      "qty_rule": "1"
+    },
+    {
+      "id": "activation_fee",
+      "label": "Activation fee",
+      "unit_price": 0.48,
+      "unit": "per_attendee",
+      "sheet": "S5 / S3",
+      "qty_rule": "N"
+    },
+    {
+      "id": "shipping_service",
+      "label": "Shipping / service",
+      "unit_price": 600,
+      "unit": "flat",
+      "sheet": "T5 / T3",
+      "qty_rule": "1"
+    },
+    {
+      "id": "labor_traveling",
+      "label": "Labor (traveling)",
+      "unit_price": 600,
+      "unit": "each",
+      "sheet": "U5 / U3",
+      "qty_rule": "2"
+    },
+    {
+      "id": "labor_local",
+      "label": "Labor (local)",
+      "unit_price": 450,
+      "unit": "each",
+      "sheet": "V5 / V3",
+      "qty_rule": "2"
+    },
+    {
+      "id": "travel_perdiem",
+      "label": "Travel, transport, per diem",
+      "unit_price": 720,
+      "unit": "each",
+      "sheet": "W5 / W3",
+      "qty_rule": "labor_traveling qty"
+    },
+    {
+      "id": "rfid_consumable",
+      "label": "RFID wristband / consumable",
+      "unit_price": 0.45,
+      "unit": "per_attendee",
+      "sheet": "X5 / X3 / J6",
+      "qty_rule": "N"
+    },
+    {
+      "id": "mail_fulfill",
+      "label": "Mail fulfillment",
+      "unit_price": 7.02,
+      "unit": "per_order",
+      "sheet": "Y5 / Y3",
+      "qty_rule": "max(1, ceil(N * 0.03))"
+    }
+  ],
+  "default_qty_assumptions": {
+    "label": "ASSUMPTION",
+    "rules": {
+      "scanners": "max(4, ceil(N/800))",
+      "pos": "max(4, ceil(N/400))",
+      "registration_kiosk": "max(2, ceil(N/2000))",
+      "truss": "equals scanners (1:1) unless user clears to 0",
+      "rfid_consumable": "N",
+      "ticketing_fee": "N",
+      "activation_fee": "N",
+      "mail_fulfill": "max(1, ceil(N * 0.03))  // ~3% mail orders ASSUMPTION",
+      "platform_fee": 1,
+      "shipping_service": 1,
+      "labor_traveling": 2,
+      "labor_local": 2,
+      "travel_perdiem": "labor_traveling"
+    }
+  },
+  "notes": [
+    "OPTIONAL ADD-ON \u2014 not part of Master Budget P&L rollups (G3 sheet target).",
+    "When OFF: zero impact on G3 / K24 / K47; reconcile at N=7888 still PASS.",
+    "When ON: hardware+platform estimate added as bucket 'RFID / Cashless (Basic Scenario)' in live forecast total opex only (additive to Master Budget).",
+    "User can edit every qty in the UI.",
+    "Do not invent WRSTBND proposal numbers beyond the PRICES row."
+  ]
+}

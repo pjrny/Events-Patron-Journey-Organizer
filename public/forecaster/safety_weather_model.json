@@ -1,0 +1,133 @@
+{
+  "id": "safety_weather_optional",
+  "label": "Safety / Weather (optional)",
+  "optional_addon": true,
+  "disclaimer": "Planning estimate only — not a legal/safety plan, not AHJ approval, and not a live NOAA forecast. ASSUMPTION unit rates for scenario planning; override any qty/day.",
+  "ASSUMPTION": "Default unit rates and qty heuristics are approximate planning figures for optional P&L adders. They are OUTSIDE Master Budget G3. Weather-sensitive lines apply at 100% outdoor / 50% hybrid / 0% indoor (ASSUMPTION).",
+  "weather_impact": {
+    "outdoor": 1.0,
+    "hybrid": 0.5,
+    "indoor": 0.0,
+    "ASSUMPTION": "hybrid = 50% weather impact"
+  },
+  "defaults": {
+    "venue_mode": "outdoor",
+    "show_days": 3,
+    "load_in_days": 2,
+    "peak_occupancy": null,
+    "camping": true,
+    "nearest_hospital_minutes": 25,
+    "ahj_fire_permit_status": "unknown",
+    "lightning_stand_down_miles": 8,
+    "wind_hold_mph": 35,
+    "heat_index_cold_trigger": "ASSUMPTION: document site heat-index / cold triggers with medical & production; not auto-costed.",
+    "weather_service_budget": 2500,
+    "cancellation_reserve_pct": 5
+  },
+  "catalog": [
+    {
+      "id": "medical_first_aid",
+      "label": "Medical / first-aid contractor",
+      "unit_price": 2800,
+      "unit": "per_day",
+      "qty_rule": "show_days + load_in_days",
+      "category": "safety",
+      "ASSUMPTION": "$2,800/day contractor coverage"
+    },
+    {
+      "id": "security_per_100",
+      "label": "Security (per 100 peak × show days)",
+      "unit_price": 480,
+      "unit": "per_100_peak_day",
+      "qty_rule": "ceil(peak/100) * show_days",
+      "category": "safety",
+      "ASSUMPTION": "$480 per 100 peak per show day"
+    },
+    {
+      "id": "security_overnight_camp",
+      "label": "Security overnight (camp)",
+      "unit_price": 220,
+      "unit": "per_100_peak_night",
+      "qty_rule": "if camping: ceil(peak/100) * max(0, show_days - 1)",
+      "category": "safety",
+      "ASSUMPTION": "$220 per 100 peak per overnight when camping"
+    },
+    {
+      "id": "fire_ems_standby",
+      "label": "Fire / EMS stand-by",
+      "unit_price": 3500,
+      "unit": "per_day",
+      "qty_rule": "show_days",
+      "category": "safety",
+      "ASSUMPTION": "$3,500/day stand-by"
+    },
+    {
+      "id": "radios_command_post",
+      "label": "Radios + command post",
+      "unit_price": 4500,
+      "unit": "flat",
+      "qty_rule": "1",
+      "category": "safety",
+      "ASSUMPTION": "$4,500 flat package"
+    },
+    {
+      "id": "temp_structure_pe",
+      "label": "Temporary structure engineer / PE stamp",
+      "unit_price": 6000,
+      "unit": "flat",
+      "qty_rule": "1",
+      "category": "safety",
+      "ASSUMPTION": "$6,000 flat PE stamp / engineer review"
+    },
+    {
+      "id": "weather_monitoring",
+      "label": "Weather monitoring service",
+      "unit_price": 2500,
+      "unit": "flat",
+      "qty_rule": "1 (or weather_service_budget)",
+      "category": "weather",
+      "ASSUMPTION": "Default $2,500 flat; overridden by weather_service_budget"
+    },
+    {
+      "id": "ground_protection",
+      "label": "Ground protection / pumps / ballast / extra tents",
+      "unit_price": 8000,
+      "unit": "flat",
+      "qty_rule": "1 × weather_impact",
+      "category": "weather",
+      "ASSUMPTION": "$8,000 flat outdoor package; × weather_impact"
+    },
+    {
+      "id": "delay_labor_bank",
+      "label": "Delay labor (4-hour show-hold bank)",
+      "unit_price": 5000,
+      "unit": "flat",
+      "qty_rule": "1 × weather_impact",
+      "category": "weather",
+      "ASSUMPTION": "$5,000 4-hour hold bank; × weather_impact"
+    },
+    {
+      "id": "cancellation_reserve",
+      "label": "Cancellation / postponement reserve",
+      "unit_price": null,
+      "unit": "pct_of_master_opex",
+      "qty_rule": "cancellation_reserve_pct % of Master G3 × weather_impact",
+      "category": "weather",
+      "ASSUMPTION": "Default 5% of Master Budget G3; × weather_impact"
+    }
+  ],
+  "checklist_only": {
+    "ahj_fire_permit_status": "Checklist only — does not change dollars",
+    "lightning_stand_down_miles": "Checklist / ops note — does not change dollars",
+    "wind_hold_mph": "Checklist / ops note — does not change dollars",
+    "heat_index_cold_trigger": "Checklist / ops note — does not change dollars",
+    "nearest_hospital_minutes": "Checklist / ops note — does not change dollars"
+  },
+  "notes": [
+    "OPTIONAL ADD-ON — not part of Master Budget P&L rollups (G3 sheet target).",
+    "When OFF: zero impact on G3 / K24 / K47; reconcile at N=7888 still PASS.",
+    "When ON: safety/weather estimate added as bucket outside Master Budget in live forecast total opex only.",
+    "User can edit every qty in the UI.",
+    "Do not claim legal/safety plan; UI must show disclaimer."
+  ]
+}

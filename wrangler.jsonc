@@ -17,6 +17,9 @@
 
   "observability": { "enabled": true },
 
+  // Static Festival Forecaster (pjrny/forecast_sim_event main) served at /forecaster/.
+  "assets": { "directory": "./public", "html_handling": "auto-trailing-slash", "not_found_handling": "none" },
+
   // Lets src/db.ts import migrations/0001_init.sql as text for self-bootstrap.
   "rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
 

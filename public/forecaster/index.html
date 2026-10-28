@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Festival Forecaster v1.3 — Accuracy then UX</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <h1>Festival Forecaster <span style="color:var(--accent)">v1.3</span></h1>
+      <div class="tag">Accuracy → Attendee Patron Journey · Master Budget engine</div>
+    </div>
+    <div class="header-kpis" id="headerKpis" title="Sticky KPIs">
+      <div class="hk"><span class="hk-l">K22</span><span class="hk-v" id="kpiRevenue">—</span></div>
+      <div class="hk"><span class="hk-l">G3</span><span class="hk-v" id="kpiOpex">—</span></div>
+      <div class="hk"><span class="hk-l">K24</span><span class="hk-v" id="kpiK24">—</span></div>
+      <div class="hk"><span class="hk-l">K47</span><span class="hk-v" id="kpiK47">—</span></div>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="btnSave" class="ghost" title="Save draft to localStorage">Save</button>
+      <button type="button" id="btnLoad" class="ghost">Load</button>
+      <button type="button" id="btnReconcile" class="primary" title="Assert sheet_targets_at_N0 within $1">Reconcile N=7888</button>
+      <button type="button" id="btnRecalc">Recalc</button>
+    </div>
+  </header>
+
+  <div id="liveDeltaBanner" class="banner warn live-delta-banner" hidden style="margin:0.75rem 1.5rem">
+    Live forecast ≠ raw sheet — see Assumption ledger. <button type="button" id="btnResetSheet" class="ghost" style="margin-left:0.5rem">Reset to sheet N=7888</button>
+  </div>
+  <div id="flash" class="banner info" hidden style="margin:0.75rem 1.5rem"></div>
+
+  <nav class="ax-stepper" id="axStepper" aria-label="Attendee Patron Journey steps">
+    <button type="button" class="ax-step active" data-step="1">1 Profile</button>
+    <button type="button" class="ax-step" data-step="2">2 Tickets</button>
+    <button type="button" class="ax-step" data-step="3">3 Prep</button>
+    <button type="button" class="ax-step" data-step="4">4 ROS</button>
+    <button type="button" class="ax-step" data-step="5">5 Numbers</button>
+    <button type="button" class="ax-step" data-step="6">6 Competitors</button>
+    <button type="button" class="ax-step" data-step="7">7 Pack</button>
+  </nav>
+
+  <div class="layout ax-layout">
+    <aside class="sidebar">
+      <!-- STEP 1: Profile -->
+      <section class="card ax-panel active" data-ax="1" id="axPanel1">
+        <h2>1 · Event profile <span class="cell-ref" title="source: wizard">wizard</span></h2>
+        <div class="event-card">
+          <label>Festival name
+            <input type="text" id="festName" placeholder="Name" />
+          </label>
+          <div class="grid-2">
+            <label>Start <input type="date" id="startDate" /></label>
+            <label>End <input type="date" id="endDate" /></label>
+          </div>
+          <div class="grid-2">
+            <label>Start time <input type="time" id="startTime" value="12:00" /></label>
+            <label>End time <input type="time" id="endTime" value="23:00" /></label>
+          </div>
+          <label>Venue name <input type="text" id="venue" placeholder="Venue / grounds" autocomplete="organization" /></label>
+          <label>Street address <input type="text" id="venueStreet" placeholder="100 Festival Rd" autocomplete="street-address" /></label>
+          <div class="grid-2">
+            <label>City <input type="text" id="city" autocomplete="address-level2" /></label>
+            <label>State <input type="text" id="state" maxlength="2" placeholder="ST" autocomplete="address-level1" /></label>
+          </div>
+          <div class="grid-2">
+            <label>ZIP <input type="text" id="venueZip" inputmode="numeric" maxlength="10" placeholder="77002" autocomplete="postal-code" /></label>
+            <label>Timezone <select id="timezone"><option value="America/Chicago">America/Chicago</option><option value="America/New_York">America/New_York</option><option value="America/Denver">America/Denver</option><option value="America/Phoenix">America/Phoenix</option><option value="America/Los_Angeles">America/Los_Angeles</option><option value="America/Anchorage">America/Anchorage</option><option value="Pacific/Honolulu">Pacific/Honolulu</option><option value="America/Puerto_Rico">America/Puerto_Rico</option><option value="America/Toronto">America/Toronto</option><option value="America/Vancouver">America/Vancouver</option><option value="America/Mexico_City">America/Mexico_City</option><option value="Europe/London">Europe/London</option><option value="Europe/Berlin">Europe/Berlin</option><option value="Europe/Amsterdam">Europe/Amsterdam</option><option value="Europe/Madrid">Europe/Madrid</option><option value="Australia/Sydney">Australia/Sydney</option><option value="Asia/Tokyo">Asia/Tokyo</option><option value="UTC">UTC</option></select></label>
+          </div>
+          <div class="grid-2">
+            <label>Type <input type="text" id="festType" placeholder="Music" /></label>
+            <label>Subtype <input type="text" id="festSubtype" placeholder="Camping" /></label>
+          </div>
+          <label>Genre <input type="text" id="festGenre" placeholder="EDM / House / Bass" /></label>
+          <label>Organizer <input type="text" id="organizer" placeholder="Organizer" /></label>
+        </div>
+        <label>Attendance N <span class="cell-ref" title="K1">K1 · sheet</span>
+          <input type="number" id="attendance" min="1" step="1" />
+        </label>
+        <label class="row"><input type="checkbox" id="limitRegEnabled" /> Limit Registrations <span class="cell-ref" title="Caps wizard N and MC attendance draws. Off = no change.">optional</span></label>
+        <label id="limitRegWrap" hidden>Cap
+          <input type="number" id="limitRegistrations" min="1" step="1" placeholder="e.g. 8000" />
+        </label>
+        <div class="ax-nav">
+          <span></span>
+          <button type="button" class="primary" data-goto="2">Next · Tickets →</button>
+        </div>
+      </section>
+
+      <!-- STEP 2: Tickets -->
+      <section class="card ax-panel" data-ax="2" id="axPanel2" hidden>
+        <h2>2 · Tickets <span class="cell-ref" title="K22">K22 · odoo-tier</span></h2>
+        <div class="grid-2">
+          <label>Ticket $<span class="cell-ref" title="K7">K7 · sheet</span>
+            <input type="number" id="ticketPrice" min="0" step="1" />
+          </label>
+          <label>Camp fee $<span class="cell-ref" title="K6">K6 · sheet</span>
+            <input type="number" id="campFee" min="0" step="0.5" />
+          </label>
+        </div>
+        <label>Camp mix % <span class="cell-ref" title="K8">K8 · sheet</span>
+          <input type="number" id="pCamp" min="0" max="100" step="1" />
+        </label>
+        <label class="row"><input type="checkbox" id="scaleAncillaries" checked /> Scale ancillaries × N/N0</label>
+
+        <label class="row"><input type="checkbox" id="tiersEnabled" /> Use ticket tiers <span class="cell-ref">odoo-tier</span></label>
+        <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">
+          Default reconstructs K22 from K7/K6/K8 all-in (K14/K19). Max + sales window affect <strong>MC only</strong> (ASSUMPTION).
+        </p>
+        <div id="tiersPanel" hidden>
+          <label class="row"><input type="checkbox" id="campSeparate" /> Camp fee separate (camp_fee×N×p_camp)</label>
+          <div class="rfid-table-wrap">
+            <table class="pnl rfid-qty" id="tiersTable">
+              <thead>
+                <tr>
+                  <th>Name</th><th class="num">Price</th><th class="num">Max</th>
+                  <th>Sales start</th><th>Sales end</th><th class="num">Qty</th>
+                </tr>
+              </thead>
+              <tbody id="tiersBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.4rem">
+            <button type="button" id="btnAddTier" class="ghost">+ Add tier</button>
+            <button type="button" id="btnResetTiers" class="ghost">Reset default tiers</button>
+          </div>
+          <p id="tiersLiveK22" class="banner info" style="margin-top:0.5rem"></p>
+          <p id="tiersError" class="banner warn" hidden></p>
+        </div>
+        <div class="ax-nav">
+          <button type="button" data-goto="1">← Profile</button>
+          <button type="button" class="primary" data-goto="3">Next · Prep →</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Prep -->
+      <section class="card ax-panel" data-ax="3" id="axPanel3" hidden>
+        <h2>3 · Prep modifiers <span class="cell-ref">wizard</span></h2>
+        <div class="wizard-toggles">
+          <label><input type="checkbox" id="musicFocus" checked /> Music focus (talent ×1.5 / off ×0.5)</label>
+          <label><input type="checkbox" id="experienceFocus" /> Experience focus (prod ×2, talent ×0.25)</label>
+          <label><input type="checkbox" id="campingOn" checked /> Camping on (site + annual ops ×1.10)</label>
+          <label><input type="checkbox" id="lastMinute" /> Last-minute production (prod ×1.20)</label>
+        </div>
+        <label style="margin-top:0.75rem">Marketing % of opex <span class="cell-ref" title="ASSUMPTION — not sheet G6:G33">ASSUMPTION / not G6:G33</span>
+          <span id="marketingPctLabel">16%</span>
+          <input type="range" id="marketingPct" min="5" max="40" value="16" />
+        </label>
+        <div class="slider-meta"><span>5%</span><span>default 16%</span><span>40%</span></div>
+        <label>Marketing hard cap $ <span class="cell-ref" title="Does not invent revenue">optional</span>
+          <input type="number" id="marketingCap" min="0" step="100" placeholder="No cap" />
+        </label>
+
+        <details class="addon-acc" id="rfidCard">
+          <summary>RFID / POS add-on <span class="cell-ref">addon</span></summary>
+          <label class="row"><input type="checkbox" id="rfidEnabled" /> Enable RFID / POS (Basic Scenario)</label>
+          <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">
+            Unit prices from Tool Basic Scenario Calculator — not Master Budget. Additive to live forecast opex only.
+          </p>
+          <label style="margin-top:0.5rem">Cashless mode
+            <select id="cashlessMode">
+              <option value="none">None</option>
+              <option value="closed">Closed loop</option>
+              <option value="open">Open loop</option>
+              <option value="hybrid" selected>Hybrid</option>
+            </select>
+          </label>
+          <div id="rfidQtyPanel" hidden>
+            <div class="rfid-table-wrap">
+              <table class="pnl rfid-qty" id="rfidQtyTable">
+                <thead>
+                  <tr><th>Line</th><th class="num">Unit $</th><th class="num">Qty</th><th class="num">Extended</th></tr>
+                </thead>
+                <tbody id="rfidQtyBody"></tbody>
+                <tfoot>
+                  <tr class="total"><td colspan="3">RFID / Cashless subtotal</td><td class="num" id="rfidSubtotal">$0.00</td></tr>
+                </tfoot>
+              </table>
+            </div>
+            <p class="banner info" id="rfidAssumption" style="margin-top:0.5rem"></p>
+            <p class="footer-note" style="text-align:left;padding:0.25rem 0" id="rfidPassthrough"></p>
+          </div>
+        </details>
+
+        <details class="addon-acc" id="safetyWeatherCard">
+          <summary>Safety / Weather add-on <span class="cell-ref">addon</span></summary>
+          <label class="row"><input type="checkbox" id="safetyWeatherEnabled" /> Enable Safety / Weather P&amp;L adders</label>
+          <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">
+            Planning estimate only — not a legal/safety plan, not AHJ approval, not live NOAA. Outside Master Budget G3.
+          </p>
+          <div id="safetyWeatherPanel" hidden>
+            <label style="margin-top:0.5rem">Venue mode
+              <select id="venueMode">
+                <option value="outdoor" selected>Outdoor</option>
+                <option value="indoor">Indoor</option>
+                <option value="hybrid">Hybrid (50% weather impact ASSUMPTION)</option>
+              </select>
+            </label>
+            <div class="grid-2">
+              <label>Peak occupancy
+                <input type="number" id="peakOccupancy" min="0" step="1" placeholder="defaults to N" />
+              </label>
+              <label>Nearest hospital (min)
+                <input type="number" id="nearestHospitalMin" min="0" step="1" value="25" />
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>Show days <input type="number" id="showDays" min="0" step="1" value="3" /></label>
+              <label>Load-in days <input type="number" id="loadInDays" min="0" step="1" value="2" /></label>
+            </div>
+            <div class="grid-2">
+              <label>AHJ fire permit
+                <select id="ahjFirePermit">
+                  <option value="unknown" selected>Unknown</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </label>
+              <label>Lightning stand-down (mi)
+                <input type="number" id="lightningMiles" min="0" step="1" value="8" />
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>Wind hold mph
+                <input type="number" id="windHoldMph" min="0" step="1" value="35" />
+              </label>
+              <label>Weather service budget $
+                <input type="number" id="weatherServiceBudget" min="0" step="50" value="2500" />
+              </label>
+            </div>
+            <label>Cancellation reserve % of Master opex
+              <input type="number" id="cancellationReservePct" min="0" max="100" step="0.5" value="5" />
+            </label>
+            <label>Heat-index / cold trigger notes
+              <input type="text" id="heatColdNotes" placeholder="ASSUMPTION: document site triggers with medical & production" />
+            </label>
+            <div class="rfid-table-wrap">
+              <table class="pnl rfid-qty" id="safetyWeatherQtyTable">
+                <thead>
+                  <tr><th>Line</th><th class="num">Unit $</th><th class="num">Qty</th><th class="num">Extended</th></tr>
+                </thead>
+                <tbody id="safetyWeatherQtyBody"></tbody>
+                <tfoot>
+                  <tr class="total"><td colspan="3">Safety / Weather subtotal</td><td class="num" id="safetyWeatherSubtotal">$0.00</td></tr>
+                </tfoot>
+              </table>
+            </div>
+            <p class="banner info" id="safetyWeatherAssumption" style="margin-top:0.5rem"></p>
+            <p class="footer-note" style="text-align:left;padding:0.25rem 0" id="safetyWeatherDisclaimer"></p>
+          </div>
+        </details>
+
+        <details class="addon-acc" id="sponsorsCard">
+          <summary>Sponsors / Booths <span class="cell-ref">addon</span></summary>
+          <label class="row"><input type="checkbox" id="sponsorsEnabled" /> Enable sponsors / booths</label>
+          <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">
+            Off ⇒ G3 and K47 unchanged. On ⇒ ancillary income (+ optional site cost outside G3). Never rewrites G34/C48.
+          </p>
+          <div id="sponsorsPanel" hidden>
+            <h3 style="font-size:0.8rem;color:var(--muted)">Sponsors</h3>
+            <div id="sponsorsList"></div>
+            <button type="button" id="btnAddSponsor" class="ghost">+ Sponsor</button>
+            <h3 style="font-size:0.8rem;color:var(--muted);margin-top:0.75rem">Booths</h3>
+            <div id="boothsList"></div>
+            <button type="button" id="btnAddBooth" class="ghost">+ Booth</button>
+            <label style="margin-top:0.5rem">Optional site cost $ <span class="cell-ref">outside G3</span>
+              <input type="number" id="sponsorSiteCost" min="0" step="100" value="0" />
+            </label>
+            <p id="sponsorsSummary" class="banner info" style="margin-top:0.5rem"></p>
+          </div>
+        </details>
+
+        <details class="addon-acc open" id="assumptionCard" open>
+          <summary>Assumption ledger <span class="cell-ref">live vs sheet</span></summary>
+          <div id="assumptionLedger"></div>
+          <button type="button" id="btnResetSheet2" class="primary" style="margin-top:0.5rem">Reset to sheet N=7888</button>
+        </details>
+
+        <div class="ax-nav">
+          <button type="button" data-goto="2">← Tickets</button>
+          <button type="button" class="primary" data-goto="4">Next · ROS →</button>
+        </div>
+      </section>
+
+      <!-- STEP 7 pack controls also in sidebar when on pack -->
+      <section class="card ax-panel" data-ax="7" id="axPanel7side" hidden>
+        <h2>7 · Pack outputs</h2>
+        <div style="display:flex;flex-direction:column;gap:0.4rem">
+          <button type="button" id="btnPoster" class="primary">Download SVG poster</button>
+          <button type="button" id="btnTemplates">Download blank pack (.xlsx + CSV)</button>
+          <button type="button" id="btnOdooCsv" class="ghost">Download odoo_event_import.csv</button>
+          <p class="footer-note" style="text-align:left;padding:0.25rem 0">
+            Multi-tab .xlsx + <code>odoo_event_import.csv</code>. No website/POS/mailer. Header from wizard profile only.
+          </p>
+        </div>
+        <div class="ax-nav">
+          <button type="button" data-goto="6">← Competitors</button>
+          <span></span>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <!-- Always-visible compact P&L when on early steps -->
+      <section class="card ax-main-panel" data-ax-main="1,2,3" id="axMainEarly">
+        <h2>Deterministic P&amp;L <span class="cell-ref">workbook model</span></h2>
+        <div id="pnlTable"></div>
+      </section>
+
+      <!-- STEP 4: ROS -->
+      <section class="card ax-main-panel" data-ax-main="4" id="axMainRos" hidden>
+        <h2>4 · ROS gate <span class="cell-ref">required before MC</span></h2>
+        <section class="ros-gate" id="rosGateIntro" style="background:var(--bg2);margin-bottom:0.75rem;padding:0.75rem;border-radius:8px">
+          <p style="font-size:0.9rem;color:var(--muted);margin:0 0 0.75rem">
+            Use your ROS, or confirm a generated skeleton? Monte Carlo Run stays disabled until you <strong>Confirm ROS</strong>.
+          </p>
+          <div class="ros-gate-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem">
+            <button type="button" id="btnRosUseMine" class="primary">Use my ROS (edit table)</button>
+            <button type="button" id="btnRosSkeleton">Generate skeleton ROS</button>
+            <span id="rosConfirmedBadge" class="badge" hidden>ROS Confirmed</span>
+          </div>
+          <label class="row" style="margin:0.5rem 0 0">
+            <input type="checkbox" id="healthProtocolOn" />
+            Health-protocol intensity (ESA COVID specifics) — default OFF
+          </label>
+        </section>
+        <div id="rosGatePanel" class="ros-gate-panel" hidden>
+          <p id="rosGateErrors" class="banner warn" hidden></p>
+          <div class="rfid-table-wrap">
+            <table class="pnl ros-table" id="rosTable">
+              <thead>
+                <tr><th>Time</th><th>Area</th><th>Action</th><th>Owner</th><th>Day</th></tr>
+              </thead>
+              <tbody id="rosTableBody"></tbody>
+            </table>
+          </div>
+          <p class="footer-note" style="text-align:left;padding:0.35rem 0">
+            Required actions: gates, first_set, doors, peak, last_set, egress
+            (plus <code>camp_open</code> when Camping on).
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+            <button type="button" id="btnRosConfirm" class="primary">Confirm ROS</button>
+            <button type="button" id="btnRosEdit">Edit</button>
+            <button type="button" id="btnRosCancel" class="ghost">Cancel</button>
+          </div>
+        </div>
+        <div class="ax-nav" style="margin-top:1rem">
+          <button type="button" data-goto="3">← Prep</button>
+          <button type="button" class="primary" data-goto="5">Next · Numbers →</button>
+        </div>
+      </section>
+
+      <!-- STEP 5: Numbers + journey -->
+      <section class="card ax-main-panel" data-ax-main="5" id="axMainNumbers" hidden>
+        <h2>5 · Numbers + journey <span class="cell-ref">Phase 2</span></h2>
+        <div class="grid-2" style="align-items:end;margin:0.75rem 0">
+          <label>Preset <span class="cell-ref">shock width only</span>
+            <select id="mcPreset">
+              <option value="conservative">Conservative (−25% / +5% attn)</option>
+              <option value="base" selected>Base (−15% / +10%)</option>
+              <option value="aggressive">Aggressive (−8% / +18%)</option>
+            </select>
+          </label>
+          <button type="button" id="btnMC" class="primary" disabled title="Confirm ROS first">Run 5,000 draws</button>
+        </div>
+        <p id="mcStatus" class="footer-note" style="text-align:left"></p>
+        <div id="mcNumbersBlock">
+          <p id="mcSentence" style="font-size:0.95rem;line-height:1.45;margin:0.5rem 0 1rem"></p>
+          <div class="kpi-row" style="margin-bottom:1rem">
+            <div class="kpi"><div class="label">P10 net</div><div class="value" id="mcP10">—</div></div>
+            <div class="kpi"><div class="label">P50 net</div><div class="value" id="mcP50">—</div></div>
+            <div class="kpi"><div class="label">P90 net</div><div class="value" id="mcP90">—</div></div>
+            <div class="kpi"><div class="label">P(profit&gt;0) / P(tickets≥opex)</div>
+              <div class="value" style="font-size:1.1rem"><span id="mcPProfit">—</span> · <span id="mcPCover">—</span></div>
+            </div>
+          </div>
+          <h3>Tornado (swing)</h3>
+          <div class="tornado" id="tornado"></div>
+        </div>
+        <div id="mcJourneyShell" class="mc-journey-shell" hidden>
+          <div class="journey-toolbar">
+            <div id="mcJourneyClock" class="journey-clock">0.0s</div>
+            <div id="mcJourneyStageStatus" class="journey-stage-status">—</div>
+            <button type="button" id="mcJourneyPause" class="ghost">Pause</button>
+            <label class="journey-scrub-label">Scrub
+              <input type="range" id="mcJourneyScrub" min="0" max="30000" value="0" />
+            </label>
+          </div>
+          <div class="journey-progress-track"><div id="mcJourneyProgress" class="journey-progress-bar"></div></div>
+          <div class="journey-layout">
+            <aside id="mcJourneyRail" class="journey-rail" aria-label="Patron journey stages"></aside>
+            <div class="journey-feeds">
+              <section class="feed-col">
+                <h3>OPS</h3>
+                <div id="mcOpsFeed" class="feed-scroll"></div>
+              </section>
+              <section class="feed-col">
+                <h3>CROWD</h3>
+                <div id="mcCrowdFeed" class="feed-scroll"></div>
+              </section>
+            </div>
+          </div>
+          <div id="mcJourneyDebrief" class="journey-debrief" hidden></div>
+        </div>
+        <div class="ax-nav" style="margin-top:1rem">
+          <button type="button" data-goto="4">← ROS</button>
+          <button type="button" class="primary" data-goto="6">Next · Competitors →</button>
+        </div>
+      </section>
+
+      <!-- STEP 6: Competitors + debrief -->
+      <section class="card ax-main-panel" data-ax-main="6" id="axMainComp" hidden>
+        <h2>6 · Competitors + debrief <span class="cell-ref">Top 8</span></h2>
+        <p class="footer-note" style="text-align:left">Directory dates may be stale — badge shows month-day; listing year may be stale.</p>
+        <div id="competitorList"></div>
+        <div id="panel-reconcile" style="margin-top:1rem">
+          <h3>Reconcile vs sheet_targets_at_N0</h3>
+          <p class="footer-note" style="text-align:left">Engine at N=7888, no wizard; ancillaries unscaled. CC fees C54 = 0.03×K22.</p>
+          <div id="reconcileBox"><p class="banner info">Click “Reconcile N=7888” in the header.</p></div>
+        </div>
+        <div class="ax-nav" style="margin-top:1rem">
+          <button type="button" data-goto="5">← Numbers</button>
+          <button type="button" class="primary" data-goto="7">Next · Pack →</button>
+        </div>
+      </section>
+
+      <!-- STEP 7 main note -->
+      <section class="card ax-main-panel" data-ax-main="7" id="axMainPack" hidden>
+        <h2>7 · Pack</h2>
+        <p>Download poster, blank ops workbooks, and <code>odoo_event_import.csv</code> from the sidebar.</p>
+        <ul style="color:var(--muted);font-size:0.9rem">
+          <li>Event: name, date, timezone, venue, organizer, tags, visibility, limit_registrations</li>
+          <li>Ticket rows: name, price, sales_start, sales_end, maximum</li>
+          <li>Sponsor: name, level, type, show_on_ticket, fee</li>
+          <li>Booth: category, count, price, creates_sponsor</li>
+        </ul>
+
+        <div class="create-event" id="createEventBox" style="margin-top:0.75rem;border-top:1px solid var(--line, #333);padding-top:0.75rem">
+          <h3 style="margin:0 0 0.4rem">Create this event</h3>
+          <p class="footer-note" style="text-align:left;padding:0 0 0.4rem">Free ticketed event on Patron Journey: GA (and VIP if set) as <em>Pay at Door</em> tickets with your price in the name. Forecast numbers stay private (D1), never in Odoo.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+            <button type="button" id="btnCreateFree" class="primary" disabled>Create free event (pay at door)</button>
+            <a id="btnCreatePaid" class="ghost button" href="https://www.pjrny.com/#Contact-us" target="_blank" rel="noopener">Create paid event</a>
+          </div>
+          <ul id="createEventIssues" class="footer-note" style="text-align:left;color:var(--muted);font-size:0.8rem;margin:0.4rem 0 0"></ul>
+          <p id="createEventStatus" class="footer-note" style="text-align:left" aria-live="polite"></p>
+        </div>
+        <div class="ax-nav">
+          <button type="button" data-goto="6">← Competitors</button>
+          <span></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <p class="footer-note">
+    Oscar Voigt / Patron Journey · Festival Forecaster v1.4 · autosaved locally · sign-in only to create the event · engine from reconciled budget_model.json
+  </p>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/baked_data.js"></script>
+  <script src="js/budget_engine.js"></script>
+  <script src="js/ticket_tiers.js"></script>
+  <script src="js/sponsors_booths.js"></script>
+  <script src="js/monte_carlo.js"></script>
+  <script src="js/competitor_score.js"></script>
+  <script src="js/competitors.js"></script>
+  <script src="js/poster.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/rfid_addon.js"></script>
+  <script src="js/safety_weather.js"></script>
+  <script src="js/crowd_ban_filter.js"></script>
+  <script src="js/crowd_bank.js"></script>
+  <script src="js/ops_bank.js"></script>
+  <script src="js/ros_gate.js"></script>
+  <script src="js/mc_presentation.js"></script>
+  <script src="js/schema_lite.js"></script>
+  <script src="js/event_draft_schema.js"></script>
+  <script src="js/event_draft.js"></script>
+  <script src="js/create_event.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
