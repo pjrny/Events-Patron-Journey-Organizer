@@ -40,7 +40,7 @@ ul{margin:4px 0;padding-left:20px}.small{font-size:12px;color:var(--muted)}.err{
 .note{background:#fff7e0;border-left:4px solid var(--gold);padding:10px;border-radius:6px;font-size:14px}
 .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}.tog{font-size:13px}.tog button{border:1px solid var(--line);background:#fff;padding:4px 10px;border-radius:5px;cursor:pointer}.tog button.on{background:var(--gold);color:#fff;border-color:var(--gold)}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
-</style></head><body>
+</style></head><body><script src="/pj-nav.js" data-active="weather"></script>
 <header><img src="${LOGO}" alt="Patron Journey"><div><h1>Will It Rain On My Event?</h1><p>Five years of weather for your exact dates, plus storms, wind, heat, holidays and a backup plan. Free.</p></div></header>
 <main>
 <div class="card"><form id="f">

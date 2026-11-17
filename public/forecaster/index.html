@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Festival Forecaster v1.3 — Accuracy then UX</title>
+  <title>Festival Forecaster (Simulator) | Patron Journey</title>
+  <meta name="description" content="Free festival P&amp;L simulator from Patron Journey: Master Budget forecast, Monte Carlo ranges, lineup draw, artist pay and date effects." />
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
+  <!-- Shared Patron Journey tools nav (served by the organizer Worker, src/nav.ts) -->
+  <script src="https://events-patronjourney.message-0ad.workers.dev/pj-nav.js" data-active="forecaster"></script>
   <header class="app-header">
-    <div class="brand">
-      <h1>Festival Forecaster <span style="color:var(--accent)">v1.3</span></h1>
-      <div class="tag">Accuracy → Attendee Patron Journey · Master Budget engine</div>
+    <div class="brand brand-row">
+      <img src="https://www.pjrny.com/web/image/35660-8cb95553/ChatGPT%20Image%204.%20Sept.%202025%2C%2012_23_31.webp?access_token=a2f29a7f-65bb-4d95-8090-27c84e4371f1" alt="Patron Journey" />
+      <div>
+        <h1>Festival Forecaster <span style="color:var(--accent);font-size:0.8em">v1.5</span></h1>
+        <div class="tag">Master Budget P&amp;L · Monte Carlo · lineup draw &amp; date effects · free from Patron Journey</div>
+      </div>
     </div>
     <div class="header-kpis" id="headerKpis" title="Sticky KPIs">
       <div class="hk"><span class="hk-l">K22</span><span class="hk-v" id="kpiRevenue">—</span></div>
@@ -82,6 +88,29 @@
         <label id="limitRegWrap" hidden>Cap
           <input type="number" id="limitRegistrations" min="1" step="1" placeholder="e.g. 8000" />
         </label>
+        <details class="addon-acc" id="lineupCard">
+          <summary>Lineup, artist pay &amp; date effects <span class="cell-ref">talent-draw.v2</span></summary>
+          <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">
+            Estimates lineup-driven turnout for the city and dates above, splits your artist budget by draw, and shows weekday, holiday and going-out-night effects. Attendance N changes only when you click Apply.
+          </p>
+          <label>Lineup (one per line; optional fee: <code>Artist | 25000</code>)
+            <textarea id="ltLineup" rows="5" maxlength="8000" placeholder="Headliner | 150000&#10;Second act&#10;Local opener"></textarea>
+          </label>
+          <div class="grid-2">
+            <label>Total artist budget $ <input type="number" id="ltBudget" min="0" step="100" placeholder="e.g. 250000" /></label>
+            <label>&nbsp;<button type="button" id="ltUseSimBudget" class="ghost" title="Copy the Talent / Lineup line (C48) from the current forecast">Use sim Talent line</button></label>
+          </div>
+          <details class="anc" id="ltHistWrap">
+            <summary>Historic shows (optional, private) <span id="ltHistCount"></span></summary>
+            <p class="footer-note" style="text-align:left;padding:0.25rem 0;margin:0">Past shows fill the "past draw" signal (30% weight) and raise confidence. Signed in to the organizer dashboard: saved privately to your account. Otherwise: saved in this browser.</p>
+            <div id="ltHist"></div>
+          </details>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin:0.5rem 0">
+            <button type="button" class="primary" id="ltRun">Estimate lineup draw</button>
+          </div>
+          <div id="ltDate"></div>
+          <div id="ltOut"></div>
+        </details>
         <div class="ax-nav">
           <span></span>
           <button type="button" class="primary" data-goto="2">Next · Tickets →</button>
@@ -455,7 +484,7 @@
   </div>
 
   <p class="footer-note">
-    Oscar Voigt / Patron Journey · Festival Forecaster v1.4 · autosaved locally · sign-in only to create the event · engine from reconciled budget_model.json
+    Oscar Voigt / Patron Journey · Festival Forecaster v1.5 · autosaved locally · sign-in only to create the event · engine from reconciled budget_model.json
   </p>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -480,5 +509,6 @@
   <script src="js/event_draft.js"></script>
   <script src="js/create_event.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/lineup_talent.js"></script>
 </body>
 </html>

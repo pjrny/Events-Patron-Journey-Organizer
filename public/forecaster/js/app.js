@@ -925,6 +925,8 @@
     options.tiers = form.options.tiers;
     const r = BudgetEngine.compute(model, options);
     lastBudget = r;
+    window.__ffLastBudget = r; // v1.5: read by js/lineup_talent.js ("Use sim Talent line")
+    try { document.dispatchEvent(new CustomEvent("ff:recalc", { detail: r })); } catch (e) {}
     renderRfidPanel(r);
     renderSafetyWeatherPanel(r);
     renderTiersPanel(r, form);

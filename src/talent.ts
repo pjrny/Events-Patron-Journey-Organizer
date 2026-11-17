@@ -2,13 +2,15 @@
  * Talent Draw Estimator — GET/POST /api/talent/draw, permalinks /talent/r/:id. Deterministic, no AI.
  * Keyless now: Deezer, iTunes Search, MusicBrainz (<=1 req/s), Google News RSS, Patron Journey festival directory.
  * Plug-in adapters (on when the secret exists): LASTFM_KEY, SEATGEEK_CLIENT_ID, TICKETMASTER_KEY, BANDSINTOWN_APP_ID, GNEWS_KEY.
- * Response shape: talent-draw.v1 (docs/TALENT.md).
+ * Response shape: talent-draw.v2 (docs/TALENT.md): v1 + date_effects, your-history past-draw signals, pay estimate.
  */
 import type { Env } from "./env";
 import { HttpError, clientIp } from "./http";
 import { sha256Hex, randomToken } from "./crypto";
 import { haversineKm } from "./festivals";
 import { geocode, type Geo } from "./weather";
+import { dateEffects } from "./date_effects";
+import { cleanRows, type HistRow } from "./history";
 
 const UA = "PatronJourney-TalentDraw/1.0 (+https://www.pjrny.com; info@pjrny.com)";
 const CACHE_DAYS = 7, MAX_ARTISTS = 40, FETCH_BUDGET = 38, MB_BUDGET = 8, ROUNDS_PER_IP_PER_HOUR = 60;
@@ -303,8 +305,37 @@ function scoreArtist(sig: Signal[]) {
 const confLabel = (c: number) => (c < 0.08 ? "Very low" : c < 0.2 ? "Low" : c < 0.4 ? "Medium" : "High");
 const spread = (c: number) => clamp(0.15 + 0.7 * (1 - Math.min(1, c / 0.5)), 0.15, 0.85);
 
+// ---------- Your history -> past draw ----------
+/** Solve v in [0,1] so that, on its own, the model reproduces the tickets you sold: H * v^3 * gate(v) = tickets. */
+function pastDrawValue(tickets: number, H: number) {
+  const target = tickets / H; if (target <= 0) return 0;
+  let lo = 0, hi = 1;
+  for (let k = 0; k < 40; k++) { const v = (lo + hi) / 2, f = v ** 3 * clamp(0.05 + 1.6 * v); if (f < target) lo = v; else hi = v; }
+  return clamp((lo + hi) / 2);
+}
+function historyFor(hist: HistRow[], name: string, place: Place, H: number, refDate: string | null) {
+  const n = norm(name), now = refDate ? Date.parse(refDate) : Date.now();
+  const mine = hist.filter((h) => norm(h.artist) === n).sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  const sig: Signal[] = [];
+  for (const h of mine.filter((x) => x.tickets_sold != null).slice(0, 5)) {
+    const ageY = h.date ? (now - Date.parse(h.date)) / (365.25 * DAY) : null;
+    if (ageY != null && ageY > 5) continue;
+    const age = ageY != null && ageY > 3 ? 0.85 : 1;
+    const [cRaw, sRaw] = (h.city ?? "").split(",").map((x) => x.trim());
+    const ck = norm(cRaw ?? ""), sk = sRaw ? sRaw.toUpperCase() : "";
+    const geo: GeoL = !ck ? "country" : ck === place.cityKey ? "city"
+      : METRO[ck] && METRO[ck] === METRO[place.cityKey] ? "metro"
+      : place.stateCode && (sk === place.stateCode || US_STATE[norm(sRaw ?? "")] === place.stateCode) ? "region" : "country";
+    const tix = h.tickets_sold! * age;
+    sig.push({ category: "past_draw", source: "Your history", metric: `tickets sold${h.capacity ? ` (of ${h.capacity.toLocaleString("en-US")} cap)` : ""}`, raw: h.tickets_sold, value: r3(pastDrawValue(tix, H)), geo, quality: "actual_sales",
+      detail: [h.date, h.venue, h.city, h.capacity ? `${Math.round((100 * h.tickets_sold!) / h.capacity)}% sold` : null, age < 1 ? "3-5 yrs old: x0.85" : null].filter(Boolean).join(" · ") });
+  }
+  const fees = mine.filter((h) => h.fee_paid != null).slice(0, 5).map((h) => ({ fee: h.fee_paid!, date: h.date, city: h.city, tickets_sold: h.tickets_sold, per_ticket: h.tickets_sold ? Math.round((100 * h.fee_paid!) / h.tickets_sold) / 100 : null }));
+  return { sig, fees, rows: mine.length };
+}
+
 // ---------- Core ----------
-export type DrawInput = { lineup: string; city: string; date: string | null; capacity: number | null; genre: string | null; price: number | null };
+export type DrawInput = { lineup: string; city: string; date: string | null; end_date?: string | null; capacity: number | null; genre: string | null; price: number | null; budget?: number | null; history?: any };
 export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
   const artists = parseLineup(inp.lineup);
   if (!artists.length) throw new HttpError(400, "Paste at least one artist (one per line, or comma separated).", "missing_lineup");
@@ -315,9 +346,15 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
   const capacity = inp.capacity != null && isFinite(inp.capacity) && inp.capacity > 0 ? Math.min(2_000_000, Math.round(inp.capacity)) : null;
   const price = inp.price != null && isFinite(inp.price) && inp.price > 0 ? Math.min(5000, inp.price) : null;
   const genre = inp.genre?.trim().slice(0, 60) || null;
+  const budget = inp.budget != null && isFinite(inp.budget) && inp.budget > 0 ? Math.min(1e9, Math.round(inp.budget)) : null;
+  const endDate = inp.end_date && /^\d{4}-\d{2}-\d{2}$/.test(inp.end_date) && inp.date && inp.end_date >= inp.date ? inp.end_date : null;
+  const hist = cleanRows(inp.history);
+  const histHash = hist.length ? (await sha256Hex(JSON.stringify(hist))).slice(0, 16) : "";
+  // Results that use your private history or budget are never cached for others or given a public permalink.
+  const isPrivate = hist.length > 0 || budget != null;
 
-  const cacheKey = `v1|${norm(city)}|${inp.date ?? ""}|${capacity ?? ""}|${norm(genre ?? "")}|${price ?? ""}|${artists.map((a) => norm(a.name) + ":" + (a.fee ?? "")).join(",")}`;
-  const hit = await env.DB.prepare(`SELECT payload FROM talent_results WHERE cache_key = ? AND created_at > datetime('now', '-${CACHE_DAYS} days') ORDER BY created_at DESC LIMIT 1`).bind(cacheKey).first<{ payload: string }>();
+  const cacheKey = `v2|${norm(city)}|${inp.date ?? ""}|${endDate ?? ""}|${capacity ?? ""}|${norm(genre ?? "")}|${price ?? ""}|${artists.map((a) => norm(a.name) + ":" + (a.fee ?? "")).join(",")}`;
+  const hit = isPrivate ? null : await env.DB.prepare(`SELECT payload FROM talent_results WHERE cache_key = ? AND created_at > datetime('now', '-${CACHE_DAYS} days') ORDER BY created_at DESC LIMIT 1`).bind(cacheKey).first<{ payload: string }>();
   if (hit) return { ...JSON.parse(hit.payload), cached: true };
 
   // Rate limit (per IP, per hour, uncached rounds)
@@ -340,10 +377,12 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
     const res = await Promise.all(batch.map((a) => artistSignals(ctx, a.name, place, dir, month, genre)));
     res.forEach((r, j) => { if (r.pending) pendingCount++; rows.push({ a: batch[j], ...r }); });
   }
-  if (pendingCount) return { schema: "talent-draw.v1", ok: true, incomplete: true, pending: pendingCount, total: artists.length, message: `Looked up ${artists.length - pendingCount} of ${artists.length} artists; continuing…` };
+  if (pendingCount) return { schema: "talent-draw.v2", ok: true, incomplete: true, pending: pendingCount, total: artists.length, message: `Looked up ${artists.length - pendingCount} of ${artists.length} artists; continuing…` };
 
   // Headliner scale: draw of a score-1.0 act in this market (attendees primarily drawn).
   const H = Math.round(clamp(place.pop * 0.006, 2500, 60000));
+  const histBy = new Map<string, ReturnType<typeof historyFor>>();
+  for (const r of rows) { const hh = historyFor(hist, r.a.name, place, H, inp.date); histBy.set(r.a.name, hh); r.sig.push(...hh.sig); }
   const scored: any[] = rows.map((r) => {
     const s = scoreArtist(r.sig);
     const draw = Math.round(H * Math.pow(s.score, 3) * s.gate);
@@ -352,7 +391,8 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
       draw: { mid: draw, low: Math.round(draw * (1 - sp)), high: Math.round(draw * (1 + sp)) }, categories: s.categories,
       signals: r.sig.map((x: Signal) => ({ ...x, base_weight: BASE[x.category], geo_discount: GEO[x.geo], quality_discount: QUALITY[x.quality], effective_weight: r3(eff(x)) })),
       genres: r.facts.genres, hometown: r.facts.musicbrainz?.area ?? null, country: r.facts.musicbrainz?.country ?? null,
-      links: { deezer: r.facts.deezer?.link ?? null, apple_music: r.facts.itunes?.link ?? null, musicbrainz: r.facts.musicbrainz ? `https://musicbrainz.org/artist/${r.facts.musicbrainz.id}` : null }, picture: r.facts.deezer?.picture ?? null, price_hint: r.facts.price_hint ?? null };
+      links: { deezer: r.facts.deezer?.link ?? null, apple_music: r.facts.itunes?.link ?? null, musicbrainz: r.facts.musicbrainz ? `https://musicbrainz.org/artist/${r.facts.musicbrainz.id}` : null }, picture: r.facts.deezer?.picture ?? null, price_hint: r.facts.price_hint ?? null,
+      history: { rows: histBy.get(r.a.name)?.rows ?? 0, past_fees: histBy.get(r.a.name)?.fees ?? [] } };
   }).sort((a, b) => b.draw.mid - a.draw.mid || b.score - a.score);
 
   // Lineup total: headliner-weighted decay (1, 1/2, 1/3, ...) sorted by draw.
@@ -363,6 +403,10 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
   const ref = hints.length ? hints.sort((a: number, b: number) => a - b)[Math.floor(hints.length / 2)] : 65;
   const priceFactor = price ? r3(clamp(Math.pow(ref / price, 0.35), 0.6, 1.3)) : 1;
   mid *= priceFactor; lo *= priceFactor; hi *= priceFactor;
+  // Date effects (weekday / public holiday / going-out & stay-in days + competition): docs/DATE_EFFECTS.md
+  const de = inp.date ? await dateEffects(env, inp.date, endDate, g.country_code ?? "US").catch(() => null) : null;
+  const dm = de?.net_multiplier ?? 1;
+  mid *= dm; lo *= dm; hi *= dm;
   const popCap = Math.round(place.pop * 0.15), caps = [popCap, ...(capacity ? [capacity] : [])], cap = Math.min(...caps);
   const capped = hi > cap;
   const tot = { low: Math.round(Math.min(lo, cap)), mid: Math.round(Math.min(mid, cap)), high: Math.round(Math.min(hi, cap)) };
@@ -380,20 +424,65 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
   if (missing.length) feed.push(`No match found for ${missing.slice(0, 5).map((s: any) => s.name).join(", ")}${missing.length > 5 ? ` and ${missing.length - 5} more` : ""} — check spelling; counted as ~0 draw.`);
   if (capped) feed.push(`Upper range capped at ${cap.toLocaleString("en-US")} (${capacity && cap === capacity ? "your capacity" : "~15% of metro population"}).`);
   if (capacity && tot.mid < capacity * 0.5) feed.push(`Lineup alone fills about ${Math.round((100 * tot.mid) / capacity)}% of capacity; the rest has to come from the event brand, marketing and walk-ups.`);
+  if (de) feed.push(`Date effect: ${de.summary}${de.days.flatMap((d: any) => d.signals.filter((x: any) => x.kind !== "weekday" && x.kind !== "info").map((x: any) => x.label)).length ? ` (${[...new Set(de.days.flatMap((d: any) => d.signals.filter((x: any) => x.kind !== "weekday" && x.kind !== "info").map((x: any) => x.label)))].join(", ")})` : ""}.`);
+  else feed.push("No event date given, so no weekday or holiday effect is applied.");
+  const withHist = scored.filter((s: any) => s.signals.some((x: any) => x.source === "Your history"));
+  if (withHist.length) feed.push(`Your history fills "past draw" for ${withHist.slice(0, 5).map((s: any) => s.name).join(", ")}${withHist.length > 5 ? ` and ${withHist.length - 5} more` : ""}.`);
   if (price && priceFactor !== 1) feed.push(`Ticket price $${price} vs ~$${Math.round(ref)} market reference adjusts draw ×${priceFactor}.`);
   feed.push(`Confidence: ${confLabel(conf)} (${Math.round(conf * 100)}% of the full signal weight). ${conf < 0.2 ? "Mostly global data, heavily discounted — add ticketing keys for local demand." : ""}`.trim());
+
+  // ---------- Artist pay estimate (docs/TALENT.md#pay) ----------
+  const histTix = hist.filter((h) => h.gross != null && h.tickets_sold);
+  const histPrice = histTix.length ? Math.round((100 * histTix.reduce((a, h) => a + h.gross!, 0)) / histTix.reduce((a, h) => a + h.tickets_sold!, 0)) / 100 : null;
+  const payPrice = price ?? histPrice ?? (hints.length ? Math.round(ref) : null);
+  const payPriceSrc = price ? "your ticket price" : histPrice ? "average ticket price in your history (gross / tickets sold)" : hints.length ? "median local face value from ticketing sources" : null;
+  const SHARE = [0.3, 0.5] as const;
+  const round50 = (x: number) => Math.round(x / 50) * 50;
+  const totC = scored.reduce((a: number, s: any) => a + s.contribution, 0);
+  const perPay = scored.map((s: any) => {
+    const share = totC ? s.contribution / totC : 0;
+    const tickets = Math.round(tot.mid * share);
+    const suggested = budget != null && totC ? round50(budget * share) : null;
+    const mLow = payPrice ? round50(tickets * payPrice * SHARE[0]) : null, mHigh = payPrice ? round50(tickets * payPrice * SHARE[1]) : null;
+    const flags: string[] = [];
+    if (!s.contribution) flags.push("No draw estimate for this act; price it by hand.");
+    if (s.fee != null && mHigh != null && s.fee > mHigh) flags.push(`Your fee $${s.fee.toLocaleString("en-US")} is above the market range for this draw.`);
+    if (s.fee != null && mLow != null && s.fee < mLow && s.contribution) flags.push(`Your fee $${s.fee.toLocaleString("en-US")} is below the market range; double-check the offer will land.`);
+    if (suggested != null && mHigh != null && suggested > mHigh) flags.push("Budget share is above what this act's draw supports.");
+    if (suggested != null && mLow != null && suggested < mLow && s.contribution) flags.push("Budget share is below the typical range; it may not be enough to book this act.");
+    const pf = s.history?.past_fees ?? [];
+    const lastFee = pf.length ? pf[0].fee : null;
+    if (lastFee != null && suggested != null && suggested < lastFee * 0.67) flags.push(`You paid $${lastFee.toLocaleString("en-US")} last time; this budget share is well below that.`);
+    if (lastFee != null && s.fee != null && s.fee > lastFee * 1.5) flags.push(`Your fee is over 1.5× the $${lastFee.toLocaleString("en-US")} you paid last time.`);
+    return { name: s.name, rank: s.rank, draw_share: r3(share), attributable_tickets: tickets, suggested_fee: suggested, market_low: mLow, market_high: mHigh, entered_fee: s.fee ?? null, past_fees: pf, flags };
+  });
+  const sum = (f: (x: any) => number | null) => perPay.reduce((a, x) => a + (f(x) ?? 0), 0);
+  const entered = scored.some((s: any) => s.fee != null) ? sum((x) => x.entered_fee) : null;
+  const mLowT = payPrice ? sum((x) => x.market_low) : null, mHighT = payPrice ? sum((x) => x.market_high) : null;
+  const payFlags: string[] = [];
+  if (budget != null && entered != null) payFlags.push(entered > budget ? `Entered fees $${entered.toLocaleString("en-US")} are $${(entered - budget).toLocaleString("en-US")} over your budget.` : `Entered fees $${entered.toLocaleString("en-US")} leave $${(budget - entered).toLocaleString("en-US")} of your budget.`);
+  if (budget != null && mHighT != null && budget > mHighT) payFlags.push(`Budget $${budget.toLocaleString("en-US")} is above ${Math.round(SHARE[1] * 100)}% of the expected gross ($${mHighT.toLocaleString("en-US")}); this lineup's draw may not pay it back.`);
+  if (budget != null && mLowT != null && budget < mLowT) payFlags.push(`Budget $${budget.toLocaleString("en-US")} is below ${Math.round(SHARE[0] * 100)}% of the expected gross ($${mLowT.toLocaleString("en-US")}); offers may be too low to book these acts.`);
+  if (!payPrice) payFlags.push("Add a ticket price to see the market range.");
+  const pay = {
+    budget, ticket_price: payPrice, ticket_price_source: payPriceSrc, talent_share_of_gross: SHARE,
+    expected_gross: payPrice ? Math.round(tot.mid * payPrice) : null,
+    totals: { suggested: budget, entered, market_low: mLowT, market_high: mHighT },
+    per_artist: perPay, flags: payFlags,
+    method: "suggested_fee = budget x draw share (draw share = headliner-weighted contribution / lineup total; rounded to $50). market range = attributable tickets x ticket price x 30-50% (typical talent share of gross).",
+  };
 
   const sd = Math.round((tot.high - tot.low) / 3.29);
   const id = "td_" + randomToken(9).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 12);
   const enabled = { lastfm: !!env.LASTFM_KEY, seatgeek: !!env.SEATGEEK_CLIENT_ID, ticketmaster: !!env.TICKETMASTER_KEY, bandsintown: !!env.BANDSINTOWN_APP_ID, gnews: !!env.GNEWS_KEY };
   const result = {
-    schema: "talent-draw.v1", ok: true, id, permalink: `/talent/r/${id}`, generated_at: new Date().toISOString(), cached: false,
-    input: { city, date: inp.date, capacity, genre, ticket_price: price, artists: artists.map((a) => ({ name: a.name, fee: a.fee })) },
+    schema: "talent-draw.v2", ok: true, id: isPrivate ? null : id, permalink: isPrivate ? null : `/talent/r/${id}`, private: isPrivate, generated_at: new Date().toISOString(), cached: false,
+    input: { city, date: inp.date, end_date: endDate, budget, history_rows: hist.length, capacity, genre, ticket_price: price, artists: artists.map((a) => ({ name: a.name, fee: a.fee })) },
     location: { city: g.city, state: g.state, country: g.country_code, lat: Math.round(g.lat * 1e4) / 1e4, lon: Math.round(g.lon * 1e4) / 1e4, metro_population: place.pop, metro_population_known: place.popKnown },
     headline: `${top ? top.name : "Lineup"}${scored.length > 1 ? ` + ${scored.length - 1} more` : ""} in ${g.city ?? city}: ${tot.low.toLocaleString("en-US")}–${tot.high.toLocaleString("en-US")} expected draw`,
-    lineup_total: { ...tot, cap, capped, price_factor: priceFactor, headliner_scale: H, method: "draw_i = headliner_scale x score^3 x popularity_gate; total = sum(draw_i / rank_i) over artists sorted by draw, x price factor, capped by min(capacity, 15% metro population)" },
+    lineup_total: { ...tot, cap, capped, price_factor: priceFactor, date_multiplier: dm, headliner_scale: H, method: "draw_i = headliner_scale x score^3 x popularity_gate; total = sum(draw_i / rank_i) over artists sorted by draw, x price factor x date multiplier, capped by min(capacity, 15% metro population)" },
     confidence: { value: conf, label: confLabel(conf), range_spread: r3(spread(conf)) },
-    artists: scored, feed,
+    artists: scored, feed, date_effects: de, pay,
     simulator: {
       attendance_base: tot, attendance_sd: sd, replace_flat_attendance: true,
       per_artist: scored.map((s: any) => ({ name: s.name, rank: s.rank, contribution: s.contribution, fee: s.fee, cost_per_expected_ticket: s.fee && s.contribution ? Math.round((100 * s.fee) / s.contribution) / 100 : null })),
@@ -402,12 +491,12 @@ export async function talentDraw(env: Env, req: Request, inp: DrawInput) {
     },
     weights: { base: BASE, geo_discount: GEO, quality_discount: QUALITY },
     sources_enabled: { deezer: true, itunes: true, musicbrainz: true, google_news_rss: !env.GNEWS_KEY, festival_directory: true, ...enabled },
-    disclaimer: "These are proxies, not ticket sales. Spotify does not expose city-level streams, and no public API gives followers by city. Worldwide numbers (Deezer fans, Last.fm listeners, Bandsintown trackers) are discounted to 20%. 'Past draw in this market' needs real sales data (Odoo/your own history) and is not yet filled, so ranges are wide.",
+    disclaimer: "These are proxies, not ticket sales. Spotify does not expose city-level streams, and no public API gives followers by city. Worldwide numbers (Deezer fans, Last.fm listeners, Bandsintown trackers) are discounted to 20%. 'Past draw in this market' comes only from historic shows you add (your own ticket sales); without them, ranges are wide. Date effects and the pay range are planning assumptions, not measured data.",
     notes: [...(place.popKnown ? [] : ["Metro population unknown for this city; assumed 1,000,000 for scale and the 15% cap."]), ...(ctx.errors.length ? [`Some lookups failed and were skipped: ${[...new Set(ctx.errors)].slice(0, 4).join("; ")}.`] : [])],
     links: { plan_free: "/dashboard", paid: env.PAID_UPGRADE_URL || "https://www.pjrny.com/#Contact-us" },
   };
   // Partial results (a source failed) get a permalink but are not reused as the 7-day cache.
-  await env.DB.prepare("INSERT INTO talent_results (id, cache_key, payload, ip_hash) VALUES (?,?,?,?)").bind(id, ctx.errors.length ? "partial|" + cacheKey : cacheKey, JSON.stringify(result), ipHash).run();
+  if (!isPrivate) await env.DB.prepare("INSERT INTO talent_results (id, cache_key, payload, ip_hash) VALUES (?,?,?,?)").bind(id, ctx.errors.length ? "partial|" + cacheKey : cacheKey, JSON.stringify(result), ipHash).run();
   return result;
 }
 
@@ -426,5 +515,7 @@ export async function talentApi(env: Env, req: Request, url: URL) {
   } else for (const [k, v] of url.searchParams) b[k] = v;
   const num = (v: any) => (v == null || v === "" ? null : Number(String(v).replace(/[$,]/g, "")));
   const lineup = Array.isArray(b.lineup) ? b.lineup.join("\n") : String(b.lineup ?? "");
-  return talentDraw(env, req, { lineup, city: String(b.city ?? ""), date: b.date ? String(b.date) : null, capacity: num(b.capacity), genre: b.genre ? String(b.genre) : null, price: num(b.price ?? b.ticket_price) });
+  let history = b.history;
+  if (typeof history === "string") { try { history = JSON.parse(history); } catch { history = null; } }
+  return talentDraw(env, req, { lineup, city: String(b.city ?? ""), date: b.date ? String(b.date) : null, end_date: b.end_date ? String(b.end_date) : null, capacity: num(b.capacity), genre: b.genre ? String(b.genre) : null, price: num(b.price ?? b.ticket_price), budget: num(b.budget), history });
 }

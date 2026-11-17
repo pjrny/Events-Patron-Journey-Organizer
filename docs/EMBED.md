@@ -41,3 +41,13 @@ No CORS is needed: the iframe's pages call the API on their own origin.
 ```
 
 `allow="camera"` is required for the check-in scanner when it is opened inside the iframe.
+
+
+## Shared tools nav (2026-11-17)
+
+Every tool page (`/dashboard`, `/forecaster/`, `/weather`, `/talent`, `/competitors`, `/rfid`) loads one shared module,
+`/pj-nav.js` (source `src/nav.ts`): a sticky dark bar with Dashboard, all tools, Events (patronjourney.com/event),
+Help Center (Knowledge Center article 42, for patrons: register/top up; for staff: POS, scanning, top up; sign-in required),
+Log in (pjrny.com/web/login) and My account (pjrny.com/my). Under 860px it collapses to a Menu button.
+All links use `target="_top"`, so they leave the iframe when embedded on pjrny.com. It sets `--pj-nav-h` on `<html>`
+so pages with their own sticky header can sit below it. To add a link, edit `NAV_LINKS` in `src/nav.ts` and deploy.

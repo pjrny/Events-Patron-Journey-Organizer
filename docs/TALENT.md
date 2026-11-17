@@ -73,3 +73,32 @@ Add a key with `npx wrangler secret put LASTFM_KEY` (etc.); the adapter turns on
 
 ## Caveats
 Spotify exposes no city streams; no API gives followers by city; worldwide data is discounted to 20%. Name matching is exact (normalized); ambiguous names may hit the wrong artist (e.g. "Mobley"). Artist names containing commas must be on their own line. iTunes Search often returns 429 to Cloudflare IPs and Google News RSS can time out; failures are retried once, then skipped and noted. Metro populations come from a built-in table (~70 metros); others assume 1M.
+
+
+---
+
+## talent-draw.v2 (2026-11-17)
+
+Additive changes over v1 (all v1 fields kept; `schema` is now `"talent-draw.v2"`, cache keys `v2|…`).
+
+**New inputs** (JSON body / form / query): `end_date` (multi-day events), `budget` (total artist budget $), `history` (array of
+historic-show rows, see docs/HISTORY.md).
+
+**Past draw** is now sourced from your own history (`source: "Your history"`, quality `actual_sales`); see docs/HISTORY.md.
+
+**Date effects**: `date_effects` (date-effects.v1, docs/DATE_EFFECTS.md) and `lineup_total.date_multiplier`. The multiplier is
+applied to the lineup total after the price factor and before the cap. No date means ×1 and a feed line saying so.
+
+### Pay
+`pay = { budget, ticket_price, ticket_price_source, talent_share_of_gross: [0.3, 0.5], expected_gross, totals, per_artist[], flags[], method }`
+
+- **Draw share** of act *i* = its headliner-weighted contribution (`draw_i / rank_i`) ÷ Σ contributions.
+- **Suggested fee** = budget × draw share, rounded to $50 (only when a budget is given).
+- **Attributable tickets** = lineup total (mid, after date effect and cap) × draw share.
+- **Market range** = attributable tickets × ticket price × 30–50% (typical talent share of gross).
+  Ticket price: your input → average from your history (Σgross/Σtickets) → median local face value (Ticketmaster/SeatGeek keys) → none (no range).
+- **Flags**: entered fee above/below the market range; suggested share above/below the range; budget vs 30%/50% of expected
+  gross; entered fees over/under budget; budget share < 67% of what you paid the act last time; entered fee > 1.5× last fee.
+- It's a planning range, not a quote: routing, radius clauses, agent asks and the deal structure (guarantee vs door split) dominate real offers.
+
+**Privacy**: requests with `history` or `budget` return `private: true`, `id: null`, `permalink: null` and are not stored.

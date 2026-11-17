@@ -33,7 +33,7 @@ th:first-child,td:first-child{text-align:left}tr.hw{background:#fbf6e8;font-weig
 #bible textarea{flex:1;border:0;padding:16px;font:13px/1.4 monospace;resize:none}
 #bible .bar{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
 @media print{body *{visibility:hidden}#bibleText,#bibleText *{visibility:visible}#bibleText{position:absolute;left:0;top:0;width:100%;height:auto;white-space:pre-wrap}}
-</style></head><body>
+</style></head><body><script src="/pj-nav.js" data-active="rfid"></script>
 <header><img src="${LOGO}" alt="Patron Journey"><div><h1>Event Tech &amp; RFID Planner</h1><p>Estimate hardware, staffing and RFID cost by provider, then generate your on-site bible.</p></div></header>
 <main>
 <section>

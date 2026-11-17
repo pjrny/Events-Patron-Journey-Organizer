@@ -5,6 +5,10 @@ import { competitorsApi } from "./competitors";
 import { competitorsPage } from "./competitors_page";
 import { talentPage } from "./talent_page";
 import { talentApi, getTalentResult } from "./talent";
+import { navJs } from "./nav";
+import { historyJs } from "./history_widget";
+import { historyApi } from "./history";
+import { dateEffectsApi } from "./date_effects";
 import { type Env, secretNames } from "./env";
 import { json, html, errorResponse, HttpError, clientIp } from "./http";
 import { timingSafeEqual } from "./crypto";
@@ -38,7 +42,15 @@ function draftCors(req: Request): Record<string, string> {
   return { "access-control-allow-origin": origin, vary: "Origin", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "600" };
 }
 
-const VERSION = "0.5.0-drafts";
+const VERSION = "0.6.0-nav-history-dates";
+
+/** Talent + date-effects APIs may be called from tools embedded on pjrny.com (no cookies cross-origin). */
+function toolCors(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  if (!origin || !DRAFT_CORS_ORIGINS.has(origin)) return {};
+  return { "access-control-allow-origin": origin, vary: "Origin", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "600" };
+}
+const jsAsset = (src: string) => new Response(src, { headers: { "content-type": "application/javascript; charset=utf-8", "cache-control": "public, max-age=300", "access-control-allow-origin": "*" } });
 
 function requireAdmin(req: Request, env: Env): void {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN secret is not configured on this Worker", "admin_not_configured");
@@ -95,6 +107,10 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
   if (method === "GET" && pathname === "/api/config") {
     return json({ paid_upgrade_url: env.PAID_UPGRADE_URL, public_events_url: env.PUBLIC_EVENTS_URL, ticket_types: ["General Admission", "Pay At Door", "Volunteer", "Staff"] });
   }
+
+  // ---------- Shared front-end modules (nav bar, historic-shows widget) ----------
+  if (method === "GET" && pathname === "/pj-nav.js") return jsAsset(navJs(url.origin));
+  if (method === "GET" && pathname === "/pj-history.js") return jsAsset(historyJs(url.origin));
 
   // ---------- Anonymous simulator drafts (CORS: pjrny.com only) ----------
   if (pathname === "/api/drafts") {
@@ -154,7 +170,18 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
     const r = await getTalentResult(env, decodeURIComponent(pathname.slice("/talent/r/".length)));
     return r ? html(talentPage(url.origin, r)) : html(talentPage(url.origin), 404);
   }
-  if ((method === "GET" || method === "POST") && pathname === "/api/talent/draw") return json(await talentApi(env, req, url));
+  if (pathname === "/api/talent/draw" || pathname === "/api/date-effects") {
+    const cors = toolCors(req);
+    if (method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    try {
+      if ((method === "GET" || method === "POST") && pathname === "/api/talent/draw") return json(await talentApi(env, req, url), 200, cors);
+      if (method === "GET" && pathname === "/api/date-effects") return json(await dateEffectsApi(env, url), 200, cors);
+    } catch (e) {
+      const r = errorResponse(e);
+      return new Response(r.body, { status: r.status, headers: { ...Object.fromEntries(r.headers), ...cors } });
+    }
+  }
+  if (pathname === "/api/talent/history") return json(await historyApi(env, req, url));
   if (method === "GET" && pathname === "/api/festivals") return json(await festivalsApi(env, req, url));
 
   // ---------- Dashboard pages ----------

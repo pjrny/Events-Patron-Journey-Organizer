@@ -24,7 +24,7 @@ const PJ_TK = 'pj_token';
 const pjToken = { get() { try { return sessionStorage.getItem(PJ_TK); } catch { return null; } },
   set(v) { try { v ? sessionStorage.setItem(PJ_TK, v) : sessionStorage.removeItem(PJ_TK); } catch {} } };
 const PJ_FRAMED = (() => { try { return window.self !== window.top; } catch { return true; } })();
-if (PJ_FRAMED) { const n = document.getElementById('framedNote'); if (n) n.classList.remove('hidden'); document.body.style.margin = '1rem auto'; }
+if (PJ_FRAMED) { const n = document.getElementById('framedNote'); if (n) n.classList.remove('hidden'); var w = document.querySelector('.pj-wrap'); if (w) w.style.margin = '1rem auto'; }
 async function pjFetch(path, opts = {}) {
   const headers = { 'content-type': 'application/json', ...(opts.headers || {}) };
   const t = pjToken.get(); if (t) headers.authorization = 'Bearer ' + t;
@@ -38,7 +38,7 @@ export const shell = (env: Env, title: string, body: string, script = "") => `<!
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} | Patron Journey Organizer</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;color:#1d1d1f}
+body{font-family:system-ui,sans-serif;margin:0;color:#1d1d1f}.pj-wrap{max-width:860px;margin:2rem auto;padding:0 1rem}
 a{color:#6b3fa0}h1{font-size:1.6rem}fieldset{border:1px solid #ddd;border-radius:8px;margin:1rem 0;padding:1rem}
 label{display:block;margin:.5rem 0 .2rem;font-weight:600;font-size:.9rem}input,textarea,select{width:100%;padding:.5rem;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;font:inherit}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.chk label{display:inline;font-weight:400;margin-right:1rem}.chk input{width:auto}
@@ -46,14 +46,14 @@ button{background:#6b3fa0;color:#fff;border:0;border-radius:6px;padding:.6rem 1.
 .msg{padding:.6rem;border-radius:6px;margin:.6rem 0}.ok{background:#e9f7ef}.err{background:#fdecea}table{width:100%;border-collapse:collapse}td,th{padding:.4rem;border-bottom:1px solid #eee;text-align:left;font-size:.92rem}
 nav a{margin-right:1rem}.hidden{display:none}
 </style></head>
-<body><h1>${esc(title)}</h1>
+<body><script src="/pj-nav.js" data-active="dashboard"></script><div class="pj-wrap"><h1>${esc(title)}</h1>
 <div id="framedNote" class="msg hidden" style="background:#f4f1f8;font-size:.9rem">You're using the dashboard embedded on pjrny.com.
 New organizers: first <a href="${PJ_SIGNUP_URL}" target="_top">create a pjrny.com account</a> or <a href="${PJ_LOGIN_URL}" target="_top">sign in on pjrny.com</a>, then return to this page.
 Email sign-in links open in a new tab: after clicking one, come back and reload this page. If this panel still asks you to sign in, use email + PIN here
 or <a href="${esc(env.PUBLIC_BASE_URL || "")}/dashboard" target="_blank" rel="noopener">open the dashboard in a new tab</a>.</div>
 ${body}
 <hr><p><small>Free tier: free and pay-at-door tickets only. Paid tickets, POS, RFID, mobile apps and advanced attendance:
-<a href="${esc(env.PAID_UPGRADE_URL)}" target="_top">contact Patron Journey</a>.</small></p>
+<a href="${esc(env.PAID_UPGRADE_URL)}" target="_top">contact Patron Journey</a>.</small></p></div>
 <script>${COMMON_JS}${script}</script></body></html>`;
 
 export function magicConfirmPage(env: Env, token: string): string {

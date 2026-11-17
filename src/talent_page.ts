@@ -43,7 +43,9 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px;borde
 </style>
 <style>form{grid-template-columns:1fr 1fr 1fr}textarea{width:100%;padding:9px;border:1px solid var(--line);border-radius:6px;font:14px/1.4 system-ui,sans-serif}.span{grid-column:1/-1}@media(max-width:760px){form{grid-template-columns:1fr}}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}.act h3{display:flex;justify-content:space-between;gap:8px}.act img{width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px}
-.pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:10px;padding:1px 7px;margin:1px;color:var(--muted)}.big{font:700 22px Georgia,serif}.why{color:var(--muted);font-size:12px}td{vertical-align:top}</style></head><body>
+.pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:10px;padding:1px 7px;margin:1px;color:var(--muted)}.big{font:700 22px Georgia,serif}.why{color:var(--muted);font-size:12px}td{vertical-align:top}
+details.card>summary{cursor:pointer;font-weight:600}.flag{color:#a0522d;font-size:12px}.ok{color:#2e7d32}.de-day{border-top:1px solid var(--line);padding:6px 0}.de-day:first-child{border-top:0}
+.tbl{overflow-x:auto}</style></head><body><script src="/pj-nav.js" data-active="talent"></script>
 <header><img src="${LOGO}" alt="Patron Journey"><div><h1>Talent Draw Estimator</h1><p>Paste your lineup. See how many people each act is likely to pull in your city, and what the whole bill adds up to. Free.</p></div></header>
 <main>
 <div class="card"><form id="f">
@@ -53,13 +55,17 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px;borde
  <div><label for="capacity">Capacity</label><input id="capacity" type="number" min="1" placeholder="5000"></div>
  <div><label for="genre">Event genre</label><input id="genre" placeholder="Indie, Hip hop, EDM..." maxlength="60"></div>
  <div><label for="price">Ticket price (optional, $)</label><input id="price" type="number" min="0" step="1" placeholder="65"></div>
+ <div><label for="budget">Total artist budget (optional, $)</label><input id="budget" type="number" min="0" step="100" placeholder="250000"></div>
+ <div><label for="end">Last day (multi-day events)</label><input id="end" type="date"></div>
  <div style="align-self:end"><button class="btn" id="go" type="submit">Estimate draw</button></div>
 </form></div>
+<details class="card" id="histCard"><summary>Your historic shows (optional): adds real "past draw" data and raises confidence <span class="small" id="histCount"></span></summary><p class="small">Add past shows you promoted or have numbers for. Matching acts get a "past draw" signal (30% weight, the strongest one), and fees you paid show up next to the pay estimate. Results that use your history or budget stay private and get no share link.</p><div id="hist"></div></details>
 <div id="out"></div>
 <p class="small">Signals: Deezer, Apple iTunes Search, MusicBrainz (CC0), Google News, and the Patron Journey festival directory; Last.fm, SeatGeek, Ticketmaster and Bandsintown switch on when keys are added. Every signal is discounted by how local it is (city 1.0, metro 0.85, state 0.6, country 0.4, worldwide 0.2) and by data quality (sales 1.0, demand score 0.8, trackers 0.6, streaming/fans 0.5, press 0.3). Festival locations use <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a> data (CC BY 4.0). Geocoding: © OpenStreetMap contributors via Nominatim.</p>
 </main>
 <script>
 var PRE = ${data};
+var HIST = null;
 function $(i){return document.getElementById(i)}
 function e(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function n(x){return x==null?'-':Number(x).toLocaleString('en-US')}
@@ -67,9 +73,10 @@ var GEO={city:'City',metro:'Metro',region:'State/region',country:'Country',globa
 var CAT={past_draw:'Past draw in market',upcoming_demand:'Upcoming demand/price',tour_presence:'Tour / local presence',fan_intent:'Fan intent',listening:'Listening',press:'Press buzz',genre_fit:'Genre fit'};
 function render(r){
   var t=r.lineup_total, x='<div class="card hero"><div class="score"><b>'+n(t.mid)+'</b><span>expected draw</span></div><div style="flex:1;min-width:260px"><h2>'+e(r.headline)+'</h2>'
-   +'<div class="grid">'+stat(n(t.low)+'–'+n(t.high),'Range','low–high')+stat(r.confidence.label,'Confidence',Math.round(r.confidence.value*100)+'% of full signal weight')+stat(n(t.cap),'Cap',r.input.capacity&&t.cap===r.input.capacity?'your capacity':'~15% of metro pop.')+(r.simulator.cost_per_expected_ticket?stat('$'+r.simulator.cost_per_expected_ticket,'Talent cost','per expected ticket'):'')+'</div>'
+   +'<div class="grid">'+stat(n(t.low)+'–'+n(t.high),'Range','low–high')+stat(r.confidence.label,'Confidence',Math.round(r.confidence.value*100)+'% of full signal weight')+(t.date_multiplier!=null?stat('×'+t.date_multiplier,'Date effect',r.date_effects?r.date_effects.days.length+' day(s), vs. a plain Saturday':'no date given'):'')+stat(n(t.cap),'Cap',r.input.capacity&&t.cap===r.input.capacity?'your capacity':'~15% of metro pop.')+(r.simulator.cost_per_expected_ticket?stat('$'+r.simulator.cost_per_expected_ticket,'Talent cost','per expected ticket'):'')+'</div>'
    +'<ul>'+r.feed.map(function(f){return '<li>'+e(f)+'</li>'}).join('')+'</ul>'
-   +'<div class="cta"><button class="btn alt" id="share" type="button">Copy share link</button><a class="btn" href="/dashboard" target="_top">Plan this event free</a><a class="btn alt" href="/weather" target="_top">Will it rain?</a><a class="btn alt" href="/competitors" target="_top">Competitor Radar</a><a class="btn alt" href="${CONTACT}" target="_top">Talk to us</a></div><div class="small" id="shareMsg"></div></div></div>';
+   +'<div class="cta">'+(r.permalink?'<button class="btn alt" id="share" type="button">Copy share link</button>':'<span class="small">Private result (uses your history or budget): no share link.</span>')+'<a class="btn" href="/dashboard" target="_top">Plan this event free</a><a class="btn alt" href="/weather" target="_top">Will it rain?</a><a class="btn alt" href="/competitors" target="_top">Competitor Radar</a><a class="btn alt" href="${CONTACT}" target="_top">Talk to us</a></div><div class="small" id="shareMsg"></div></div></div>';
+  x+=dateCard(r.date_effects)+payCard(r.pay);
   x+='<div class="acts">'+r.artists.map(function(a){
     return '<div class="card act"><h3><span>'+(a.picture?'<img src="'+e(a.picture)+'" alt="">':'')+'#'+a.rank+' '+e(a.name)+'</span><span class="big">'+n(a.draw.mid)+'</span></h3>'
      +'<div class="why">Draw '+n(a.draw.low)+'–'+n(a.draw.high)+' &middot; counts ×'+a.decay+' in total ('+n(a.contribution)+') &middot; score '+a.score+' &middot; confidence '+e(a.confidence_label)+(a.fee?' &middot; fee $'+n(a.fee):'')+'</div>'
@@ -78,20 +85,42 @@ function render(r){
      +'<div class="why">'+[a.links.deezer?'<a href="'+e(a.links.deezer)+'" target="_blank" rel="noopener">Deezer</a>':'',a.links.apple_music?'<a href="'+e(a.links.apple_music)+'" target="_blank" rel="noopener">Apple Music</a>':'',a.links.musicbrainz?'<a href="'+e(a.links.musicbrainz)+'" target="_blank" rel="noopener">MusicBrainz</a>':''].filter(Boolean).join(' &middot; ')+'</div></div>'}).join('')+'</div>';
   x+='<div class="card"><div class="note">'+e(r.disclaimer)+'</div><p class="small">'+r.notes.map(e).join('<br>')+'</p><p class="small">Lineup total = '+e(r.lineup_total.method)+'. Headliner scale for this market: '+n(r.lineup_total.headliner_scale)+'.</p></div>';
   $('out').innerHTML=x;
-  $('share').onclick=function(){var u=location.origin+r.permalink;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){$('shareMsg').textContent='Copied: '+u},function(){$('shareMsg').textContent=u})};
+  if($('share'))$('share').onclick=function(){var u=location.origin+r.permalink;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){$('shareMsg').textContent='Copied: '+u},function(){$('shareMsg').textContent=u})};
+}
+function money(x){return x==null?'-':'$'+Number(x).toLocaleString('en-US')}
+function dateCard(d){
+  if(!d) return '<div class="card"><h3>Date effects</h3><p class="small">Add an event date to apply weekday, holiday and going-out-night effects.</p></div>';
+  return '<div class="card"><h3>Date effects: ×'+d.net_multiplier+'</h3><p>'+e(d.summary)+'</p>'+d.days.map(function(day){
+    return '<div class="de-day"><b>'+e(day.date)+' ('+e(day.weekday)+')</b>: ×'+day.net_multiplier+' <span class="small">= day ×'+day.day_multiplier+' · demand ×'+day.demand_boost+' · competition −'+Math.round(day.competition_penalty*100)+'%</span><ul>'
+     +day.signals.map(function(s){return '<li><b>'+e(s.label)+'</b> ('+e(s.effect)+'): <span class="small">'+e(s.why)+'</span></li>'}).join('')+'</ul></div>'}).join('')
+   +'<p class="small">'+e(d.assumption)+' Sources: '+e(d.sources.join(', '))+'. '+e((d.notes||[]).join(' '))+'</p></div>';
+}
+function payCard(p){
+  if(!p) return '';
+  var rows=p.per_artist.map(function(a){return '<tr><td>#'+a.rank+' '+e(a.name)+(a.flags.length?'<br>'+a.flags.map(function(f){return '<span class="flag">⚠ '+e(f)+'</span>'}).join('<br>'):'')
+    +(a.past_fees&&a.past_fees.length?'<br><span class="small">You paid '+a.past_fees.map(function(f){return money(f.fee)+(f.date?' ('+e(f.date)+(f.per_ticket?', $'+f.per_ticket+'/ticket':'')+')':'')}).join('; ')+'</span>':'')+'</td>'
+    +'<td>'+Math.round(a.draw_share*100)+'%</td><td>'+n(a.attributable_tickets)+'</td><td><b>'+money(a.suggested_fee)+'</b></td><td>'+(a.market_low!=null?money(a.market_low)+'–'+money(a.market_high):'-')+'</td><td>'+money(a.entered_fee)+'</td></tr>'}).join('');
+  return '<div class="card"><h3>Artist pay estimate</h3>'
+   +(p.budget==null?'<p class="small">Add your total artist budget above to split it by draw.</p>':'')
+   +'<div class="tbl"><table><tr><th>Artist</th><th>Draw share</th><th>Tickets</th><th>Suggested fee</th><th>Market range</th><th>Your fee</th></tr>'+rows
+   +'<tr><th>Total</th><th></th><th></th><th>'+money(p.totals.suggested)+'</th><th>'+(p.totals.market_low!=null?money(p.totals.market_low)+'–'+money(p.totals.market_high):'-')+'</th><th>'+money(p.totals.entered)+'</th></tr></table></div>'
+   +(p.flags.length?'<ul>'+p.flags.map(function(f){return '<li class="flag">'+e(f)+'</li>'}).join('')+'</ul>':'')
+   +'<p class="small">'+(p.ticket_price?'Ticket price $'+p.ticket_price+' ('+e(p.ticket_price_source)+'), expected gross '+money(p.expected_gross)+'. ':'')+e(p.method)+' A planning range, not a quote: real offers depend on routing, radius clauses, agent asks and your deal (guarantee vs. door split).</p></div>';
 }
 function stat(b,l,sub){return '<div class="stat"><b>'+e(b)+'</b>'+e(l)+'<br><small>'+e(sub)+'</small></div>'}
-function body(){return JSON.stringify({lineup:$('lineup').value,city:$('city').value,date:$('date').value||null,capacity:$('capacity').value||null,genre:$('genre').value||null,price:$('price').value||null})}
+function body(){return JSON.stringify({lineup:$('lineup').value,city:$('city').value,date:$('date').value||null,end_date:$('end').value||null,capacity:$('capacity').value||null,genre:$('genre').value||null,price:$('price').value||null,budget:$('budget').value||null,history:HIST?HIST.rows():[]})}
 function call(round){
   return fetch('/api/talent/draw',{method:'POST',headers:{'content-type':'application/json'},body:body()}).then(function(r){return r.json()}).then(function(j){
     if(!j.ok){$('out').innerHTML='<div class="err">'+e(j.message||'Something went wrong')+'</div>';return}
     if(j.incomplete){ if(round>=12){$('out').innerHTML='<div class="err">Lookups are slow right now. Try again in a minute; finished artists are saved.</div>';return}
       $('out').innerHTML='<div class="card">'+e(j.message)+'</div>'; return call(round+1)}
-    render(j); try{history.replaceState(null,'',j.permalink)}catch(_){}
+    render(j); try{history.replaceState(null,'',j.permalink||'/talent')}catch(_){}
   });
 }
 $('f').onsubmit=function(ev){ev.preventDefault();$('go').disabled=true;$('go').textContent='Looking up artists…';$('out').innerHTML='<div class="card">Looking up artists (MusicBrainz allows 1 request/second, so big lineups take a moment)…</div>';
   call(0).catch(function(){$('out').innerHTML='<div class="err">Network error. Try again.</div>'}).then(function(){$('go').disabled=false;$('go').textContent='Estimate draw'})};
-if(PRE){var i=PRE.input;$('lineup').value=i.artists.map(function(a){return a.name+(a.fee?' | '+a.fee:'')}).join('\n');$('city').value=i.city||'';$('date').value=i.date||'';$('capacity').value=i.capacity||'';$('genre').value=i.genre||'';$('price').value=i.ticket_price||'';render(PRE)}
+function mountHist(){ if(window.PJHistory&&!HIST) HIST=PJHistory.mount($('hist'),{onChange:function(r){$('histCount').textContent=r.length?'('+r.length+' rows)':'';}}); }
+var hs=document.createElement('script');hs.src='/pj-history.js';hs.onload=mountHist;document.head.appendChild(hs);
+if(PRE){var i=PRE.input;$('end').value=i.end_date||'';$('lineup').value=i.artists.map(function(a){return a.name+(a.fee?' | '+a.fee:'')}).join('\n');$('city').value=i.city||'';$('date').value=i.date||'';$('capacity').value=i.capacity||'';$('genre').value=i.genre||'';$('price').value=i.ticket_price||'';render(PRE)}
 </script></body></html>`;
 }
