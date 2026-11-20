@@ -1,6 +1,6 @@
 /**
  * Shared Patron Journey tools nav (one module for every page). Served as GET /pj-nav.js and included by
- * /dashboard, /weather, /talent, /competitors, /rfid and the static /forecaster/ (forecast_sim_event).
+ * /dashboard, /weather, /talent, /competitors, /rfid, the static /library/ and /forecaster/ (forecast_sim_event).
  * Usage: <script src="https://events-patronjourney.message-0ad.workers.dev/pj-nav.js" data-active="talent" defer></script>
  * Injects a sticky top bar (collapses to a Menu button under 860px). All links use target="_top" so they
  * leave the iframe when a tool is embedded on pjrny.com. Sets the CSS variable --pj-nav-h on <html>
@@ -13,6 +13,7 @@ export const NAV_LINKS = {
     { key: "talent", label: "Talent Draw", path: "/talent" },
     { key: "competitors", label: "Competitors", path: "/competitors" },
     { key: "rfid", label: "RFID Planner", path: "/rfid" },
+    { key: "library", label: "Template Library", path: "/library/" },
   ],
   dashboard: { key: "dashboard", label: "Dashboard", path: "/dashboard" },
   events: "https://www.patronjourney.com/event",

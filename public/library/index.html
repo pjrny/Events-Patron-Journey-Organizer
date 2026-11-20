@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Template Library · Patron Journey</title>
+<meta name="description" content="Free festival planning templates: run of show, packing list, transport, production, crew handbook, RFID & POS, talent, marketing, budget and safety metrics. Download blank, with sample data, or filled from your Festival Forecaster run.">
+<script src="/pj-nav.js" data-active="library"></script>
+<style>
+:root{--cream:#F8F4EC;--gold:#B8932E;--ink:#2B2620;--muted:#6B6257;--line:#e4dccb;--card:#FFFDF8}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.5 Helvetica,Arial,system-ui,sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.2}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+.hero h1{font-size:34px;margin:8px 0 6px}.hero p{max-width:760px;color:var(--muted);margin:0 0 10px}
+.doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0}
+.door{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:10px;padding:14px}
+.door h3{margin:0 0 4px;font-size:17px}.door p{margin:0 0 6px;color:var(--muted);font-size:14px}.door a{color:var(--gold);font-weight:600;text-decoration:none}
+.mine{background:#fff;border:1px dashed var(--gold);border-radius:10px;padding:12px 14px;margin:14px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mine b{font-family:Georgia,serif}.mine .sp{flex:1}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.chip{border:1px solid var(--gold);background:transparent;color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer;font:600 13px Helvetica,Arial,sans-serif}
+.chip.on{background:var(--gold);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.card.feature{grid-column:1/-1;flex-direction:row}.card.feature .pv{flex:0 0 45%;height:auto;min-height:260px}
+.pv{height:170px;background:#fff center top/cover no-repeat;border-bottom:1px solid var(--line)}
+.body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.body h3{margin:0;font-size:18px}.tag{display:inline-block;font:700 11px Helvetica,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.body p{margin:0;color:var(--muted);font-size:14px}.body ul{margin:2px 0 0 18px;padding:0;font-size:13.5px}.body li{margin:2px 0}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.btn{border:1px solid var(--gold);background:#fff;color:var(--ink);padding:7px 11px;border-radius:7px;font:600 13px Helvetica,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.btn.pri{background:var(--gold);color:#fff}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.note{font-size:12.5px;color:var(--muted)}.status{min-height:1.2em;font-size:13px;color:var(--muted)}
+.foot{margin-top:28px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.foot a{color:var(--gold)}
+@media(max-width:760px){.card.feature{flex-direction:column}.card.feature .pv{min-height:170px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <span class="tag">Knowledge Center · Template Library</span>
+    <h1>Plan the whole festival from one Event Bible</h1>
+    <p>Eleven planning templates built from real festival production files and published safety guidance (Purple Guide, SGSA Green Guide, NFPA, NWS and public-health mass-gathering guides). Every template comes three ways: <b>Blank</b> with private info stripped, <b>Sample</b> filled with a fictional event, or <b>My data</b> filled from your Festival Forecaster run. Files are filled in your browser. Nothing is uploaded.</p>
+  </section>
+
+  <div class="doors">
+    <div class="door"><h3>Organizers</h3><p>Forecast, then download your Event Bible and templates.</p><a href="/forecaster/" target="_top">Open the Festival Simulator →</a></div>
+    <div class="door"><h3>Patrons</h3><p>Before you go: packing, registering a wristband, topping up.</p><a href="#packing" id="patronLink">Festival packing list →</a></div>
+    <div class="door"><h3>Staff &amp; crew</h3><p>POS, scanning and top-up how-tos (sign-in required).</p><a href="https://www.patronjourney.com/knowledge/article/42" target="_top">Staff Knowledge Center →</a></div>
+  </div>
+
+  <div class="mine" id="mineBox">
+    <div class="sp" id="mineText">Checking for a saved Festival Forecaster run on this device…</div>
+    <button class="btn" id="mineClear" hidden>Forget my data</button>
+  </div>
+
+  <div class="chips" id="chips" role="toolbar" aria-label="Filter templates">
+    <button class="chip on" data-f="all">All</button><button class="chip" data-f="Plan">Plan</button><button class="chip" data-f="Build">Build</button>
+    <button class="chip" data-f="Run">Run</button><button class="chip" data-f="Marketing">Marketing</button><button class="chip" data-f="Safety">Safety</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="status" id="status" aria-live="polite"></p>
+
+  <div class="foot">
+    <p><b>How filling works:</b> each workbook has one <i>Inputs</i> tab. Every other tab reads from it with live formulas, so you can change a number and the whole file updates. The <i>Sources</i> tab cites every ratio. Guidance figures are planning floors. Your licensing authority, fire marshal (AHJ) and medical provider set the final numbers.</p>
+    <p><b>Privacy:</b> blank and sample files contain no names of private individuals, phone numbers, emails, PINs or vendor pricing. "My data" is read from this browser's storage (saved when you click <i>Download Event Bible</i> or <i>Template Library</i> in the simulator) and never sent to a server.</p>
+    <p>Sample Event Bible as PDF: <a href="event-bible-sample.pdf" target="_blank" rel="noopener">event-bible-sample.pdf</a> · Field map for developers: <a href="field_map.json">field_map.json</a></p>
+  </div>
+</div>
+<script src="/vendor/fflate.min.js"></script>
+<script src="event_bible.js"></script>
+<script>
+(function(){
+  var TIPS = {
+    "event-bible": ["Fill Inputs once; all 11 tabs follow", "Print-ready: landscape, fit to width, page numbers", "Sources tab cites every ratio and method"],
+    ros: ["Build back from curfew: headliner closes the main stage", "Line check and changeover are explicit. Overlap check flags clashes", "Crew call and briefings sit before gates on every day"],
+    packing: ["Rain, heat and cold-night advice switches on from 5 years of weather history", "Camping items only when the event camps", "Crew kit sized from crew count and spare %"],
+    transport: ["Shuttle buses sized from riders, seat count and round trip", "Artist pick-ups timed before line check", "Keep driver phones out of shared copies"],
+    production: ["Toilets, water points, waste, medical and stewards come from Safety Metrics", "Wristbands and devices come from RFID & POS", "Order-by dates count back from show day"],
+    handbook: ["Conduct, emergency and incident timelines up front", "PPE to ISO 20471 and a 15 km/h site speed limit", "Radio channels by role, never personal numbers"],
+    rfid: ["Device counts from the simulator, with spares", "Observed ratios from real vendor proposals (prices removed)", "Refund, lost-band and offline policies set before on-sale"],
+    talent: ["Max guarantee per act: attributable revenue ÷ budget divisor", "Deposit and balance per offer", "Weekly sales scoreboard from announce day"],
+    artist_marketing: ["Tier 1: 2 newsletter, 2 website, 3 social, 1 FB event", "Tracking link per act (UTM)", "Tick off commitments as artists post"],
+    announce: ["13 sections from admin to talent buying", "Every task gets a due date counted back from announce", "Announce-day and on-sale go-live rows"],
+    budget: ["Break-even price and attendance", "Six attendance scenarios. Fixed costs stay, variable costs scale", "Department roll-up plus 140 line items with actual vs budget"],
+    safety: ["Toilets per Purple Guide Table 1, campsite ratios included", "Water, waste, medical tier, steward floor, entry lanes, egress width", "Lightning and wind triggers with NWS / ANSI E1.21 notes"]
+  };
+  var grid = document.getElementById("grid"), statusEl = document.getElementById("status");
+  var mine = EventBible.loadState(), sample = null, fm = null;
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function setMine(){
+    var t = document.getElementById("mineText"), c = document.getElementById("mineClear");
+    if (mine && mine.scalars) {
+      var s = mine.scalars;
+      t.innerHTML = "<b>My data:</b> " + esc(s.event_name || "Untitled event") + (s.city ? " · " + esc(s.city) : "") + (s.start_date ? " · " + esc(s.start_date) : "") + " <span class='note'>(saved " + esc(mine.saved_at ? new Date(mine.saved_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "") + " on this device)</span>";
+      c.hidden = false;
+    } else {
+      t.innerHTML = "<b>No simulator data on this device yet.</b> <span class='note'>Run the <a href='/forecaster/' target='_top'>Festival Simulator</a>, then use <i>Template Library →</i> in step 7 to fill any template with your numbers.</span>";
+      c.hidden = true;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode=mine]"), function(b){ b.disabled = !mine; });
+  }
+  document.getElementById("mineClear").onclick = function(){ try { localStorage.removeItem(EventBible.STATE_KEY); } catch(e){} mine = null; setMine(); };
+  function card(id, f){
+    var feature = id === "event-bible";
+    var el = document.createElement("article"); el.className = "card" + (feature ? " feature" : ""); el.id = id; el.dataset.stage = f.stage || "all";
+    el.innerHTML = '<div class="pv" style="background-image:url(previews/' + id + '.png)" role="img" aria-label="Preview of ' + esc(f.title) + ' (sample data)"></div>'
+      + '<div class="body"><span class="tag">' + esc(feature ? "All 11 templates · one workbook" : f.stage) + '</span><h3>' + esc(f.title) + '</h3>'
+      + '<p>' + esc(feature ? "Run of Show, Packing List, Transport Master, Production Fulfillment, Site & Crew Handbook, RFID & POS, Talent Worksheet, Artist Marketing, Lineup Announce, Budget & Scenarios and Safety Metrics. All of them read one Inputs tab." : f.description) + '</p>'
+      + '<ul>' + (TIPS[id]||[]).map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + '</ul>'
+      + '<div class="btns"><a class="btn" href="' + f.path + '" download="' + id + '-blank.xlsx">Blank</a>'
+      + '<button class="btn" data-mode="sample" data-id="' + id + '">Sample</button>'
+      + '<button class="btn pri" data-mode="mine" data-id="' + id + '">My data</button></div></div>';
+    return el;
+  }
+  function go(btn){
+    var id = btn.dataset.id, mode = btn.dataset.mode;
+    statusEl.textContent = "Preparing " + id + "…"; btn.disabled = true;
+    var p = mode === "sample" ? (sample ? Promise.resolve(sample) : fetch("sample.json").then(function(r){ return r.json(); }).then(function(j){ sample = j; return j; })) : Promise.resolve(mine);
+    p.then(function(d){ if (!d) throw new Error("No simulator data on this device."); return EventBible.download(id, d, { base: "./" }); })
+     .then(function(r){ statusEl.textContent = "Downloaded " + r.name + "."; })
+     .catch(function(e){ statusEl.textContent = "Could not build the file: " + (e.message || e); })
+     .then(function(){ btn.disabled = mode === "mine" && !mine; });
+  }
+  fetch("field_map.json").then(function(r){ return r.json(); }).then(function(j){
+    fm = j;
+    Object.keys(fm.files).forEach(function(id){ grid.appendChild(card(id, fm.files[id])); });
+    grid.addEventListener("click", function(e){ var b = e.target.closest("button[data-mode]"); if (b) go(b); });
+    setMine();
+    if (/[?&]mine=1/.test(location.search) && mine) document.getElementById("mineBox").scrollIntoView({ behavior: "smooth" });
+  }).catch(function(e){ statusEl.textContent = "Could not load the library: " + e.message; });
+  document.getElementById("chips").addEventListener("click", function(e){
+    var c = e.target.closest(".chip"); if (!c) return;
+    Array.prototype.forEach.call(document.querySelectorAll(".chip"), function(x){ x.classList.toggle("on", x === c); });
+    var f = c.dataset.f;
+    Array.prototype.forEach.call(grid.children, function(el){ el.hidden = !(f === "all" || el.id === "event-bible" || el.dataset.stage === f); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -64,7 +64,7 @@
       .then(function (r) { return r.json(); }).then(function (j) {
         if (!j.ok) throw new Error(j.message || "Something went wrong");
         if (j.incomplete) { out.innerHTML = '<p class="lt-muted">' + esc(j.message) + "</p>"; if ((round || 0) < 12) return run((round || 0) + 1); throw new Error("Lookups are slow right now; try again in a minute."); }
-        last = j; render(); btn.disabled = false; btn.textContent = "Re-estimate lineup draw";
+        last = j; window.__ffLastTalent = j; render(); btn.disabled = false; btn.textContent = "Re-estimate lineup draw";
       }).catch(function (e) { out.innerHTML = '<p class="banner fail">' + esc(e.message) + "</p>"; btn.disabled = false; btn.textContent = "Estimate lineup draw"; });
   }
   function render() {

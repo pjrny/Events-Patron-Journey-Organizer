@@ -1,0 +1,761 @@
+{
+ "version": "event-bible.v1",
+ "inputs_sheet": "Inputs",
+ "value_column": "C",
+ "scalars": {
+  "data_mode": {
+   "cell": "C6",
+   "type": "text",
+   "label": "Data in this file",
+   "source": "set by filler"
+  },
+  "generated_at": {
+   "cell": "C7",
+   "type": "text",
+   "label": "Generated",
+   "source": "filler clock"
+  },
+  "event_name": {
+   "cell": "C8",
+   "type": "text",
+   "label": "Event name",
+   "source": "profile.name"
+  },
+  "organizer": {
+   "cell": "C9",
+   "type": "text",
+   "label": "Organizer / promoter",
+   "source": "profile.organizer"
+  },
+  "event_type": {
+   "cell": "C10",
+   "type": "text",
+   "label": "Event type",
+   "source": "profile.type / subtype"
+  },
+  "genre": {
+   "cell": "C11",
+   "type": "text",
+   "label": "Genre",
+   "source": "profile.genre"
+  },
+  "venue": {
+   "cell": "C12",
+   "type": "text",
+   "label": "Venue / site name",
+   "source": "profile.venue"
+  },
+  "street": {
+   "cell": "C13",
+   "type": "text",
+   "label": "Street address",
+   "source": "profile.street"
+  },
+  "city": {
+   "cell": "C14",
+   "type": "text",
+   "label": "City",
+   "source": "profile.city"
+  },
+  "state": {
+   "cell": "C15",
+   "type": "text",
+   "label": "State / region",
+   "source": "profile.state"
+  },
+  "zip": {
+   "cell": "C16",
+   "type": "text",
+   "label": "Postcode",
+   "source": "profile.zip"
+  },
+  "timezone": {
+   "cell": "C17",
+   "type": "text",
+   "label": "Time zone",
+   "source": "profile.timezone"
+  },
+  "start_date": {
+   "cell": "C18",
+   "type": "date",
+   "label": "First show day",
+   "source": "profile.start_date"
+  },
+  "end_date": {
+   "cell": "C19",
+   "type": "date",
+   "label": "Last show day",
+   "source": "profile.end_date"
+  },
+  "show_days": {
+   "cell": "C20",
+   "type": "number",
+   "label": "Show days",
+   "source": "safetyWeather.show_days or date span"
+  },
+  "load_in_days": {
+   "cell": "C21",
+   "type": "number",
+   "label": "Load-in days before show",
+   "source": "safetyWeather.load_in_days"
+  },
+  "load_out_days": {
+   "cell": "C22",
+   "type": "number",
+   "label": "Load-out days after show",
+   "source": "(default)"
+  },
+  "gates_open": {
+   "cell": "C23",
+   "type": "time",
+   "label": "Gates open (daily)",
+   "source": "profile.start_time"
+  },
+  "gates_close": {
+   "cell": "C24",
+   "type": "time",
+   "label": "Gates close / curfew (daily)",
+   "source": "profile.end_time"
+  },
+  "gate_hours": {
+   "cell": "C25",
+   "type": "number",
+   "label": "Gate opening hours per day",
+   "source": "computed from gate times"
+  },
+  "attendance": {
+   "cell": "C26",
+   "type": "number",
+   "label": "Expected attendance (N)",
+   "source": "options.N"
+  },
+  "peak_occupancy": {
+   "cell": "C27",
+   "type": "number",
+   "label": "Peak on-site occupancy",
+   "source": "safetyWeather.peak_occupancy"
+  },
+  "capacity_limit": {
+   "cell": "C28",
+   "type": "number",
+   "label": "Licensed / ticket cap",
+   "source": "profile.limit_registrations"
+  },
+  "camping": {
+   "cell": "C29",
+   "type": "yn",
+   "label": "Camping (Y/N)",
+   "source": "profile.camping"
+  },
+  "camping_pct": {
+   "cell": "C30",
+   "type": "pct",
+   "label": "Share of attendees camping",
+   "source": "options.p_camp"
+  },
+  "alcohol_food": {
+   "cell": "C31",
+   "type": "yn",
+   "label": "Alcohol & food served in quantity (Y/N)",
+   "source": "(default)"
+  },
+  "female_share": {
+   "cell": "C32",
+   "type": "pct",
+   "label": "Female share of audience",
+   "source": "(default)"
+  },
+  "ticket_price": {
+   "cell": "C33",
+   "type": "money",
+   "label": "GA ticket price",
+   "source": "options.ticket"
+  },
+  "single_day_price": {
+   "cell": "C34",
+   "type": "money",
+   "label": "Single-day ticket price",
+   "source": "(blank = GA ÷ show days)"
+  },
+  "camp_fee": {
+   "cell": "C35",
+   "type": "money",
+   "label": "Camping fee",
+   "source": "options.camp_fee"
+  },
+  "avg_revenue_per_head": {
+   "cell": "C36",
+   "type": "money",
+   "label": "Avg revenue per attendee (K23)",
+   "source": "budget.K23"
+  },
+  "ticket_revenue": {
+   "cell": "C37",
+   "type": "money",
+   "label": "Ticket revenue (K22)",
+   "source": "budget.K22"
+  },
+  "ancillary_revenue": {
+   "cell": "C38",
+   "type": "money",
+   "label": "Ancillary + sponsor income",
+   "source": "budget.ancTotal + sponsors"
+  },
+  "total_opex": {
+   "cell": "C39",
+   "type": "money",
+   "label": "Total opex (live)",
+   "source": "budget.total_opex"
+  },
+  "net_profit": {
+   "cell": "C40",
+   "type": "money",
+   "label": "Net after projected income (K47)",
+   "source": "budget.K47"
+  },
+  "break_even_price": {
+   "cell": "C41",
+   "type": "money",
+   "label": "Break-even ticket price (K2)",
+   "source": "budget.K2"
+  },
+  "talent_budget": {
+   "cell": "C42",
+   "type": "money",
+   "label": "Total artist budget",
+   "source": "talent budget or departments.talent"
+  },
+  "production_budget": {
+   "cell": "C43",
+   "type": "money",
+   "label": "Production budget (ex talent)",
+   "source": "departments.production"
+  },
+  "marketing_budget": {
+   "cell": "C44",
+   "type": "money",
+   "label": "Marketing budget",
+   "source": "departments.marketing"
+  },
+  "target_profit": {
+   "cell": "C45",
+   "type": "money",
+   "label": "Target profit",
+   "source": "(you)"
+  },
+  "mc_p_profit": {
+   "cell": "C46",
+   "type": "pct",
+   "label": "Monte Carlo: chance of profit",
+   "source": "Monte Carlo result"
+  },
+  "ticket_url": {
+   "cell": "C47",
+   "type": "text",
+   "label": "Ticket / event URL",
+   "source": "event page"
+  },
+  "announce_date": {
+   "cell": "C48",
+   "type": "date",
+   "label": "Lineup announce date",
+   "source": "(blank = 90 days before)"
+  },
+  "onsale_date": {
+   "cell": "C49",
+   "type": "date",
+   "label": "Public on-sale date",
+   "source": "(blank = announce + 2 days)"
+  },
+  "cashless_mode": {
+   "cell": "C50",
+   "type": "text",
+   "label": "Cashless mode",
+   "source": "rfid.cashlessMode"
+  },
+  "rfid_enabled": {
+   "cell": "C51",
+   "type": "yn",
+   "label": "RFID / cashless used (Y/N)",
+   "source": "rfid.enabled"
+  },
+  "rfid_subtotal": {
+   "cell": "C52",
+   "type": "money",
+   "label": "RFID / cashless cost (sim)",
+   "source": "budget.rfid_subtotal"
+  },
+  "venue_mode": {
+   "cell": "C53",
+   "type": "text",
+   "label": "Venue mode",
+   "source": "safetyWeather.venue_mode"
+  },
+  "weather_score": {
+   "cell": "C54",
+   "type": "number",
+   "label": "Weather risk score (0–100)",
+   "source": "/api/weather/risk"
+  },
+  "weather_label": {
+   "cell": "C55",
+   "type": "text",
+   "label": "Weather risk label",
+   "source": "/api/weather/risk"
+  },
+  "rain_pct": {
+   "cell": "C56",
+   "type": "number",
+   "label": "Rain on event days (% of past years)",
+   "source": "/api/weather/risk"
+  },
+  "storm_pct": {
+   "cell": "C57",
+   "type": "number",
+   "label": "Thunderstorms (% of past years)",
+   "source": "/api/weather/risk"
+  },
+  "wind_hold_pct": {
+   "cell": "C58",
+   "type": "number",
+   "label": "Gusts over hold threshold (% of years)",
+   "source": "/api/weather/risk"
+  },
+  "heat_pct": {
+   "cell": "C59",
+   "type": "number",
+   "label": "Highs over 32°C/90°F (% of years)",
+   "source": "/api/weather/risk"
+  },
+  "cold_pct": {
+   "cell": "C60",
+   "type": "number",
+   "label": "Lows under 5°C/41°F (% of years)",
+   "source": "/api/weather/risk"
+  },
+  "avg_high_f": {
+   "cell": "C61",
+   "type": "number",
+   "label": "Average high °F",
+   "source": "/api/weather/risk"
+  },
+  "avg_low_f": {
+   "cell": "C62",
+   "type": "number",
+   "label": "Average low °F",
+   "source": "/api/weather/risk"
+  },
+  "weather_link": {
+   "cell": "C63",
+   "type": "text",
+   "label": "Weather result link",
+   "source": "/weather permalink"
+  },
+  "lightning_miles": {
+   "cell": "C64",
+   "type": "number",
+   "label": "Lightning stand-down radius (miles)",
+   "source": "safetyWeather.lightning_stand_down_miles"
+  },
+  "wind_hold_mph": {
+   "cell": "C65",
+   "type": "number",
+   "label": "Wind hold (mph)",
+   "source": "safetyWeather.wind_hold_mph"
+  },
+  "hospital_minutes": {
+   "cell": "C66",
+   "type": "number",
+   "label": "Nearest hospital (minutes)",
+   "source": "safetyWeather.nearest_hospital_minutes"
+  },
+  "fire_permit": {
+   "cell": "C67",
+   "type": "text",
+   "label": "Fire permit (AHJ) status",
+   "source": "safetyWeather.ahj_fire_permit_status"
+  },
+  "security_staff": {
+   "cell": "C68",
+   "type": "number",
+   "label": "Security posts budgeted in sim",
+   "source": "safety line security_per_100 qty ÷ show days"
+  },
+  "safety_subtotal": {
+   "cell": "C69",
+   "type": "money",
+   "label": "Safety / weather cost (sim)",
+   "source": "budget.safety_weather_subtotal"
+  },
+  "crew_count": {
+   "cell": "C70",
+   "type": "number",
+   "label": "Crew & staff on site (peak)",
+   "source": "(you)"
+  },
+  "volunteer_count": {
+   "cell": "C71",
+   "type": "number",
+   "label": "Volunteers (peak)",
+   "source": "(you)"
+  },
+  "changeover_min": {
+   "cell": "C72",
+   "type": "number",
+   "label": "Default changeover (min)",
+   "source": "(default)"
+  },
+  "linecheck_min": {
+   "cell": "C73",
+   "type": "number",
+   "label": "Line check before set (min)",
+   "source": "(default)"
+  },
+  "lane_rate": {
+   "cell": "C74",
+   "type": "number",
+   "label": "Entry lane rate (people / hour / lane)",
+   "source": "(default)"
+  },
+  "peak_arrival_share": {
+   "cell": "C75",
+   "type": "pct",
+   "label": "Share of attendees arriving in busiest hour",
+   "source": "(you)"
+  },
+  "egress_minutes": {
+   "cell": "C76",
+   "type": "number",
+   "label": "Target egress time (minutes)",
+   "source": "(default)"
+  },
+  "bus_capacity": {
+   "cell": "C77",
+   "type": "number",
+   "label": "Seats per bus / coach",
+   "source": "(default)"
+  },
+  "shuttle_share": {
+   "cell": "C78",
+   "type": "pct",
+   "label": "Share of attendees using shuttles",
+   "source": "(you)"
+  },
+  "people_per_car": {
+   "cell": "C79",
+   "type": "number",
+   "label": "People per car",
+   "source": "(you)"
+  },
+  "deposit_pct": {
+   "cell": "C80",
+   "type": "pct",
+   "label": "Standard artist deposit %",
+   "source": "(default)"
+  },
+  "fest_pass_share": {
+   "cell": "C81",
+   "type": "pct",
+   "label": "Share of an act's fans who'd buy a full pass",
+   "source": "(default)"
+  },
+  "band_spare_pct": {
+   "cell": "C82",
+   "type": "pct",
+   "label": "Spare wristbands %",
+   "source": "(default)"
+  },
+  "device_spare_pct": {
+   "cell": "C83",
+   "type": "pct",
+   "label": "Spare devices %",
+   "source": "(default)"
+  }
+ },
+ "tables": {
+  "stages": {
+   "first_row": 88,
+   "max_rows": 10,
+   "columns": {
+    "name": {
+     "col": "B",
+     "type": "text"
+    },
+    "type": {
+     "col": "C",
+     "type": "text"
+    },
+    "capacity": {
+     "col": "D",
+     "type": "number"
+    },
+    "open": {
+     "col": "E",
+     "type": "time"
+    },
+    "close": {
+     "col": "F",
+     "type": "time"
+    }
+   }
+  },
+  "lineup": {
+   "first_row": 102,
+   "max_rows": 60,
+   "columns": {
+    "artist": {
+     "col": "B",
+     "type": "text"
+    },
+    "day": {
+     "col": "C",
+     "type": "number"
+    },
+    "stage": {
+     "col": "D",
+     "type": "text"
+    },
+    "start": {
+     "col": "E",
+     "type": "time"
+    },
+    "length": {
+     "col": "F",
+     "type": "number"
+    },
+    "tier": {
+     "col": "G",
+     "type": "text"
+    },
+    "draw": {
+     "col": "H",
+     "type": "number"
+    },
+    "suggested_fee": {
+     "col": "I",
+     "type": "money"
+    },
+    "offer": {
+     "col": "J",
+     "type": "money"
+    },
+    "agency": {
+     "col": "K",
+     "type": "text"
+    }
+   }
+  },
+  "budget": {
+   "first_row": 166,
+   "max_rows": 140,
+   "columns": {
+    "dept": {
+     "col": "B",
+     "type": "text"
+    },
+    "item": {
+     "col": "C",
+     "type": "text"
+    },
+    "amount": {
+     "col": "D",
+     "type": "money"
+    },
+    "fixed": {
+     "col": "E",
+     "type": "yn"
+    },
+    "note": {
+     "col": "F",
+     "type": "text"
+    }
+   }
+  },
+  "rfid": {
+   "first_row": 310,
+   "max_rows": 20,
+   "columns": {
+    "id": {
+     "col": "B",
+     "type": "text"
+    },
+    "item": {
+     "col": "C",
+     "type": "text"
+    },
+    "unit_price": {
+     "col": "D",
+     "type": "money"
+    },
+    "qty": {
+     "col": "E",
+     "type": "number"
+    },
+    "unit": {
+     "col": "F",
+     "type": "text"
+    }
+   }
+  },
+  "safety": {
+   "first_row": 334,
+   "max_rows": 15,
+   "columns": {
+    "id": {
+     "col": "B",
+     "type": "text"
+    },
+    "item": {
+     "col": "C",
+     "type": "text"
+    },
+    "unit_price": {
+     "col": "D",
+     "type": "money"
+    },
+    "qty": {
+     "col": "E",
+     "type": "number"
+    },
+    "unit": {
+     "col": "F",
+     "type": "text"
+    }
+   }
+  }
+ },
+ "files": {
+  "event-bible": {
+   "path": "event-bible.xlsx",
+   "title": "Event Bible (all templates)",
+   "tabs": [
+    "ros",
+    "packing",
+    "transport",
+    "production",
+    "handbook",
+    "rfid",
+    "talent",
+    "artist_marketing",
+    "announce",
+    "budget",
+    "safety"
+   ]
+  },
+  "ros": {
+   "path": "templates/ros.xlsx",
+   "title": "Run of Show",
+   "sheet": "Run of Show",
+   "description": "Build/show/break dates, daily key times, stage schedule with overlap checks, show-day cues",
+   "stage": "Run",
+   "tabs": [
+    "ros"
+   ]
+  },
+  "packing": {
+   "path": "templates/packing.xlsx",
+   "title": "Packing List",
+   "sheet": "Packing List",
+   "description": "Attendee list that adapts to weather & camping, plus crew kit",
+   "stage": "Run",
+   "tabs": [
+    "packing"
+   ]
+  },
+  "transport": {
+   "path": "templates/transport.xlsx",
+   "title": "Transport Master",
+   "sheet": "Transport Master",
+   "description": "Shuttle & parking sizing and the master transport log",
+   "stage": "Build",
+   "tabs": [
+    "transport"
+   ]
+  },
+  "production": {
+   "path": "templates/production.xlsx",
+   "title": "Production Fulfillment",
+   "sheet": "Production Fulfillment",
+   "description": "Ops, staging & production order list linked to safety sizing and budget",
+   "stage": "Build",
+   "tabs": [
+    "production",
+    "rfid",
+    "safety"
+   ]
+  },
+  "handbook": {
+   "path": "templates/handbook.xlsx",
+   "title": "Site & Crew Handbook",
+   "sheet": "Site & Crew Handbook",
+   "description": "Crew need-to-knows: conduct, emergencies, incident timelines, site rules",
+   "stage": "Build",
+   "tabs": [
+    "handbook",
+    "safety"
+   ]
+  },
+  "rfid": {
+   "path": "templates/rfid.xlsx",
+   "title": "RFID & POS Planner",
+   "sheet": "RFID & POS",
+   "description": "Device sizing, cost lines, cashless policies, advance checklist, menu import",
+   "stage": "Plan",
+   "tabs": [
+    "rfid",
+    "safety"
+   ]
+  },
+  "talent": {
+   "path": "templates/talent.xlsx",
+   "title": "Talent Worksheet",
+   "sheet": "Talent Worksheet",
+   "description": "Max guarantee per act, offers, deposits and the sales scoreboard",
+   "stage": "Plan",
+   "tabs": [
+    "talent",
+    "budget"
+   ]
+  },
+  "artist_marketing": {
+   "path": "templates/artist_marketing.xlsx",
+   "title": "Artist Marketing Checklist",
+   "sheet": "Artist Marketing",
+   "description": "Tier commitments and tracking links per act",
+   "stage": "Marketing",
+   "tabs": [
+    "artist_marketing"
+   ]
+  },
+  "announce": {
+   "path": "templates/announce.xlsx",
+   "title": "Lineup Announce Checklist",
+   "sheet": "Lineup Announce",
+   "description": "13-section announce plan with due dates",
+   "stage": "Marketing",
+   "tabs": [
+    "announce"
+   ]
+  },
+  "budget": {
+   "path": "templates/budget.xlsx",
+   "title": "Budget & Scenario Calculator",
+   "sheet": "Budget & Scenarios",
+   "description": "Headline P&L, break-even, 6 scenarios, department roll-up, line items",
+   "stage": "Plan",
+   "tabs": [
+    "budget"
+   ]
+  },
+  "safety": {
+   "path": "templates/safety.xlsx",
+   "title": "Event Safety Guide & Metrics",
+   "sheet": "Safety Metrics",
+   "description": "Toilets, water, waste, medical, stewards, ingress/egress, weather triggers",
+   "stage": "Safety",
+   "tabs": [
+    "safety"
+   ]
+  }
+ }
+}

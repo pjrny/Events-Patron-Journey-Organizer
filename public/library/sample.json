@@ -1,0 +1,1517 @@
+{
+ "schema": "pj-event-bible-data.v1",
+ "mode": "SAMPLE DATA — fictional event",
+ "scalars": {
+  "data_mode": "SAMPLE DATA — fictional event",
+  "generated_at": "2026-11-20 10:18 America/Chicago",
+  "event_name": "SAMPLE Fest (fictional)",
+  "organizer": "Sample Promotions (fictional)",
+  "event_type": "Music festival / Camping",
+  "genre": "Indie / electronic",
+  "venue": "Sample Ranch (fictional)",
+  "street": "",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "",
+  "timezone": "America/Chicago",
+  "start_date": "2027-04-09",
+  "end_date": "2027-04-11",
+  "show_days": 3,
+  "load_in_days": 2,
+  "gates_open": "12:00",
+  "gates_close": "23:00",
+  "gate_hours": 11,
+  "attendance": 4000,
+  "peak_occupancy": 4000,
+  "capacity_limit": 4500,
+  "camping": "Y",
+  "camping_pct": 0.6,
+  "ticket_price": 199,
+  "camp_fee": 45.5,
+  "avg_revenue_per_head": 235.289,
+  "ticket_revenue": 941156,
+  "ancillary_revenue": 72971.6024340771,
+  "total_opex": 1331161.1673833227,
+  "net_profit": -262033.56494924566,
+  "break_even_price": 168.09295638870998,
+  "talent_budget": 450000,
+  "production_budget": 222500,
+  "marketing_budget": 81900,
+  "mc_p_profit": null,
+  "cashless_mode": "closed",
+  "rfid_enabled": "Y",
+  "rfid_subtotal": 17837.4,
+  "venue_mode": "outdoor",
+  "hospital_minutes": 25,
+  "fire_permit": "submitted",
+  "security_staff": 40,
+  "safety_subtotal": 182253.51,
+  "lightning_miles": 8,
+  "wind_hold_mph": 35,
+  "weather_score": 34,
+  "weather_label": "Moderate",
+  "rain_pct": 60,
+  "storm_pct": 0,
+  "wind_hold_pct": 40,
+  "heat_pct": 0,
+  "cold_pct": 0,
+  "avg_high_f": 78,
+  "avg_low_f": 58,
+  "weather_link": "https://events-patronjourney.message-0ad.workers.dev/weather/r/wx_3Q3ODjuVLwPe",
+  "ticket_url": "https://example.com/sample-fest",
+  "crew_count": 120,
+  "volunteer_count": 80,
+  "peak_arrival_share": 0.25,
+  "shuttle_share": 0.3,
+  "people_per_car": 2.5
+ },
+ "tables": {
+  "stages": [
+   {
+    "name": "Main Stage",
+    "type": "Main",
+    "capacity": 4000,
+    "open": "12:00",
+    "close": "23:00"
+   },
+   {
+    "name": "Stage 2",
+    "type": "Secondary",
+    "capacity": null,
+    "open": "12:00",
+    "close": "23:00"
+   },
+   {
+    "name": "Stage 3",
+    "type": "Secondary",
+    "capacity": null,
+    "open": "12:00",
+    "close": "23:00"
+   }
+  ],
+  "lineup": [
+   {
+    "artist": "Sample Act 28",
+    "day": 1,
+    "stage": "Stage 2",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 90,
+    "suggested_fee": 4000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 22",
+    "day": 1,
+    "stage": "Stage 2",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 110,
+    "suggested_fee": 5000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 16",
+    "day": 1,
+    "stage": "Stage 2",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 150,
+    "suggested_fee": 7000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 10",
+    "day": 1,
+    "stage": "Stage 2",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 240,
+    "suggested_fee": 11500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 25",
+    "day": 1,
+    "stage": "Stage 3",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 100,
+    "suggested_fee": 4500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 19",
+    "day": 1,
+    "stage": "Stage 3",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 130,
+    "suggested_fee": 6000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 13",
+    "day": 1,
+    "stage": "Stage 3",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 180,
+    "suggested_fee": 8500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 07",
+    "day": 1,
+    "stage": "Stage 3",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 340,
+    "suggested_fee": 16000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 04",
+    "day": 1,
+    "stage": "Main Stage",
+    "start": "20:15",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 600,
+    "suggested_fee": 28000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 01",
+    "day": 1,
+    "stage": "Main Stage",
+    "start": "21:30",
+    "length": 90,
+    "tier": "Tier 1",
+    "draw": 2400,
+    "suggested_fee": 112500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 29",
+    "day": 2,
+    "stage": "Stage 2",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 80,
+    "suggested_fee": 4000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 23",
+    "day": 2,
+    "stage": "Stage 2",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 100,
+    "suggested_fee": 5000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 17",
+    "day": 2,
+    "stage": "Stage 2",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 140,
+    "suggested_fee": 6500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 11",
+    "day": 2,
+    "stage": "Stage 2",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 220,
+    "suggested_fee": 10000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 26",
+    "day": 2,
+    "stage": "Stage 3",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 90,
+    "suggested_fee": 4500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 20",
+    "day": 2,
+    "stage": "Stage 3",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 120,
+    "suggested_fee": 5500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 14",
+    "day": 2,
+    "stage": "Stage 3",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 170,
+    "suggested_fee": 8000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 08",
+    "day": 2,
+    "stage": "Stage 3",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 300,
+    "suggested_fee": 14000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 05",
+    "day": 2,
+    "stage": "Main Stage",
+    "start": "20:15",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 480,
+    "suggested_fee": 22500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 02",
+    "day": 2,
+    "stage": "Main Stage",
+    "start": "21:30",
+    "length": 90,
+    "tier": "Tier 1",
+    "draw": 1200,
+    "suggested_fee": 56500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 30",
+    "day": 3,
+    "stage": "Stage 2",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 80,
+    "suggested_fee": 4000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 24",
+    "day": 3,
+    "stage": "Stage 2",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 100,
+    "suggested_fee": 4500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 18",
+    "day": 3,
+    "stage": "Stage 2",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 130,
+    "suggested_fee": 6500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 12",
+    "day": 3,
+    "stage": "Stage 2",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 200,
+    "suggested_fee": 9500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 27",
+    "day": 3,
+    "stage": "Stage 3",
+    "start": "18:15",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 90,
+    "suggested_fee": 4000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 21",
+    "day": 3,
+    "stage": "Stage 3",
+    "start": "19:30",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 110,
+    "suggested_fee": 5500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 15",
+    "day": 3,
+    "stage": "Stage 3",
+    "start": "20:45",
+    "length": 60,
+    "tier": "Tier 3",
+    "draw": 160,
+    "suggested_fee": 7500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 09",
+    "day": 3,
+    "stage": "Stage 3",
+    "start": "22:00",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 270,
+    "suggested_fee": 12500,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 06",
+    "day": 3,
+    "stage": "Main Stage",
+    "start": "20:15",
+    "length": 60,
+    "tier": "Tier 2",
+    "draw": 400,
+    "suggested_fee": 19000,
+    "agency": null
+   },
+   {
+    "artist": "Sample Act 03",
+    "day": 3,
+    "stage": "Main Stage",
+    "start": "21:30",
+    "length": 90,
+    "tier": "Tier 1",
+    "draw": 800,
+    "suggested_fee": 37500,
+    "agency": null
+   }
+  ],
+  "budget": [
+   {
+    "dept": "site",
+    "item": "Venue",
+    "amount": 57875,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Electrical Work",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Insurance",
+    "amount": 10000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Portapotties GA",
+    "amount": 17600,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Generators",
+    "amount": 1200,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Festival Tents (Vendors and Production)",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Vendor Signage/Other Banners",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Shower Trailer VIP",
+    "amount": 0,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Bathroom Trailer VIP",
+    "amount": 1200,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Bikerack Barricade",
+    "amount": 2000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "site",
+    "item": "Fencing",
+    "amount": 5600,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Stage & Facade Design Materials  Stage 1 (Main)",
+    "amount": 12500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Stage & Facade Design Materials  Stage 2",
+    "amount": 20000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Stage & Facade Design Materials  Stage 3",
+    "amount": 7500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Heavy Equipment & Light Towers",
+    "amount": 17000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Generators for Production",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Lighting Stage 1 (Main)",
+    "amount": 45000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Lighting Stage 2",
+    "amount": 12000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Lighting Stage 3",
+    "amount": 4000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "LED Video Walls",
+    "amount": 15000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Sound Stage 1 (Main)",
+    "amount": 12000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Sound Stage 2",
+    "amount": 4500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Sound Stage 3",
+    "amount": 3000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Lasers",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Creative Venue Lighting",
+    "amount": 10000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "General White Light Towers",
+    "amount": 3000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Crash Barricade",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "CO2, Confetti, + Effects",
+    "amount": 4000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "FOH Build",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Stage Scrims",
+    "amount": 1500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Video Content Creation for LED Walls",
+    "amount": 1500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Directional Signage",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Stage Entrance Portals",
+    "amount": 2000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Additional Art Installations",
+    "amount": 10000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Fireworks Show",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Visuals and Inflatables",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Videography and Documentary",
+    "amount": 7500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Photographers",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "production",
+    "item": "Performers / Stilt Walkers / Clowns / workshops",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "talent",
+    "item": "Lineup - ARTISTS/MUSIC",
+    "amount": 450000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Website / Mobile App Development",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Fliers and Posters",
+    "amount": 4000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Programs / Schedules / Maps",
+    "amount": 750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Email Marketing",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Marketing Stickers or Other Marketing Items",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Hard Ticket Stock (If Printing Tickets)",
+    "amount": 0,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Web Hosting, Email Hosting, and Domain",
+    "amount": 150,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Facebook & Instagram Advertising",
+    "amount": 25000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Twitter Advertising",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Google Paid Search",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Adroll Remarketing",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Graphic Design",
+    "amount": 3000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 1",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 2",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 3",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 4",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 5",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Blog Partner 6",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Radio Ads",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Street Team Bounties Paid / Promos",
+    "amount": 6000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "National Promoter Partner Fees",
+    "amount": 2000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Text Marketing",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Print Partner 1",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Print Partner 2",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Print Partner 3",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Print Partner 4",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Print Partner 5",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "marketing",
+    "item": "Other Marketing",
+    "amount": 15000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Postage",
+    "amount": 150,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Gas/Fuel",
+    "amount": 3500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Backline Tech Riders",
+    "amount": 13000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Production Housing for Staff",
+    "amount": 4500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Hotels for Artists",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Runners/Transportation for Artists",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "pre_production",
+    "item": "Production Food / Water / Hospitality / Green Room Rental",
+    "amount": 15000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Golf Carts",
+    "amount": 4500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Walkie Talkies, batteries, chargers, etc.",
+    "amount": 650,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Miscellaneous (Onsite Internet Expense, Water drinking stations, Etc.)",
+    "amount": 4000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Staff/Volunteer/Security",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Stage Beach Balls / Glow Sticks / Audience Freebies",
+    "amount": 250,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "EMS Medical Services",
+    "amount": 15000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Trash/Dumpster/Recycling/Labor",
+    "amount": 16000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Additional Power/Water Needed for Vendors (Generators?)",
+    "amount": 1750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Sponsorship Costs (Sales Persons?)",
+    "amount": 4200,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Ferris Wheel or Amusement Rides",
+    "amount": 20000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "misc",
+    "item": "Charity Donations",
+    "amount": 2000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Cloth Wristbands & Lanyards",
+    "amount": 1500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Backstage Laminates",
+    "amount": 750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Ticket Company Credit Card Processing Fees",
+    "amount": 28235,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Ticketing Fees",
+    "amount": 0,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Fullfillment Box + Shipping",
+    "amount": 0,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "ticketing",
+    "item": "Wristband Swap Fees",
+    "amount": 0,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Volunteer Manager",
+    "amount": 500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Hospitality Line Manager",
+    "amount": 750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Security",
+    "amount": 30000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Production Manager",
+    "amount": 10000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Marketing Manager",
+    "amount": 7500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "PR Manager",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Inventory Manager",
+    "amount": 3000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Front Gate Ticketing Manager",
+    "amount": 1500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Front Gate Ticketing Assistant Manager",
+    "amount": 750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Merchandise Manager",
+    "amount": 1500,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Merchandise Assistant Manager",
+    "amount": 750,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Labor Hands",
+    "amount": 1250,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Site Opps Manager",
+    "amount": 1000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "staff",
+    "item": "Total Owner Annual Salaries",
+    "amount": 50000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "annual_ops",
+    "item": "Travel",
+    "amount": 7000,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "annual_ops",
+    "item": "Business Registration and Fees",
+    "amount": 125,
+    "fixed": "Y",
+    "note": ""
+   },
+   {
+    "dept": "annual_ops",
+    "item": "Sales Taxes",
+    "amount": 10086,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Ticketing (platform/ticket fee)",
+    "amount": 5960,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Access-control scanner",
+    "amount": 625,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Truss",
+    "amount": 100,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Registration station / kiosk (AC)",
+    "amount": 150,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "POS terminal",
+    "amount": 850,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Platform fee(s)",
+    "amount": 1450,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Activation fee",
+    "amount": 1920,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Shipping / service",
+    "amount": 600,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Labor (traveling)",
+    "amount": 1200,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Labor (local)",
+    "amount": 900,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Travel, transport, per diem",
+    "amount": 1440,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "RFID wristband / consumable",
+    "amount": 1800,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "rfid",
+    "item": "Mail fulfillment",
+    "amount": 842,
+    "fixed": "N",
+    "note": ""
+   },
+   {
+    "dept": "safety",
+    "item": "Medical / first-aid contractor",
+    "amount": 14000,
+    "fixed": "N",
+    "note": "per_day"
+   },
+   {
+    "dept": "safety",
+    "item": "Security (per 100 peak × show days)",
+    "amount": 57600,
+    "fixed": "N",
+    "note": "per_100_peak_day"
+   },
+   {
+    "dept": "safety",
+    "item": "Security overnight (camp)",
+    "amount": 17600,
+    "fixed": "N",
+    "note": "per_100_peak_night"
+   },
+   {
+    "dept": "safety",
+    "item": "Fire / EMS stand-by",
+    "amount": 10500,
+    "fixed": "N",
+    "note": "per_day"
+   },
+   {
+    "dept": "safety",
+    "item": "Radios + command post",
+    "amount": 4500,
+    "fixed": "Y",
+    "note": "flat"
+   },
+   {
+    "dept": "safety",
+    "item": "Temporary structure engineer / PE stamp",
+    "amount": 6000,
+    "fixed": "Y",
+    "note": "flat"
+   },
+   {
+    "dept": "safety",
+    "item": "Weather monitoring service",
+    "amount": 2500,
+    "fixed": "Y",
+    "note": "flat"
+   },
+   {
+    "dept": "safety",
+    "item": "Ground protection / pumps / ballast / extra tents",
+    "amount": 8000,
+    "fixed": "Y",
+    "note": "flat"
+   },
+   {
+    "dept": "safety",
+    "item": "Delay labor (4-hour show-hold bank)",
+    "amount": 5000,
+    "fixed": "Y",
+    "note": "flat"
+   },
+   {
+    "dept": "safety",
+    "item": "Cancellation / postponement reserve",
+    "amount": 56554,
+    "fixed": "Y",
+    "note": "pct_of_master_opex"
+   }
+  ],
+  "rfid": [
+   {
+    "id": "ticketing_fee",
+    "item": "Ticketing (platform/ticket fee)",
+    "unit_price": 1.49,
+    "qty": 4000,
+    "unit": "ea"
+   },
+   {
+    "id": "scanner",
+    "item": "Access-control scanner",
+    "unit_price": 125,
+    "qty": 5,
+    "unit": "ea"
+   },
+   {
+    "id": "truss",
+    "item": "Truss",
+    "unit_price": 20,
+    "qty": 5,
+    "unit": "ea"
+   },
+   {
+    "id": "registration_kiosk",
+    "item": "Registration station / kiosk (AC)",
+    "unit_price": 75,
+    "qty": 2,
+    "unit": "ea"
+   },
+   {
+    "id": "pos",
+    "item": "POS terminal",
+    "unit_price": 85,
+    "qty": 10,
+    "unit": "ea"
+   },
+   {
+    "id": "platform_fee",
+    "item": "Platform fee(s)",
+    "unit_price": 1450,
+    "qty": 1,
+    "unit": "ea"
+   },
+   {
+    "id": "activation_fee",
+    "item": "Activation fee",
+    "unit_price": 0.48,
+    "qty": 4000,
+    "unit": "ea"
+   },
+   {
+    "id": "shipping_service",
+    "item": "Shipping / service",
+    "unit_price": 600,
+    "qty": 1,
+    "unit": "ea"
+   },
+   {
+    "id": "labor_traveling",
+    "item": "Labor (traveling)",
+    "unit_price": 600,
+    "qty": 2,
+    "unit": "ea"
+   },
+   {
+    "id": "labor_local",
+    "item": "Labor (local)",
+    "unit_price": 450,
+    "qty": 2,
+    "unit": "ea"
+   },
+   {
+    "id": "travel_perdiem",
+    "item": "Travel, transport, per diem",
+    "unit_price": 720,
+    "qty": 2,
+    "unit": "ea"
+   },
+   {
+    "id": "rfid_consumable",
+    "item": "RFID wristband / consumable",
+    "unit_price": 0.45,
+    "qty": 4000,
+    "unit": "ea"
+   },
+   {
+    "id": "mail_fulfill",
+    "item": "Mail fulfillment",
+    "unit_price": 7.02,
+    "qty": 120,
+    "unit": "ea"
+   }
+  ],
+  "safety": [
+   {
+    "id": "medical_first_aid",
+    "item": "Medical / first-aid contractor",
+    "unit_price": 2800,
+    "qty": 5,
+    "unit": "per_day"
+   },
+   {
+    "id": "security_per_100",
+    "item": "Security (per 100 peak × show days)",
+    "unit_price": 480,
+    "qty": 120,
+    "unit": "per_100_peak_day"
+   },
+   {
+    "id": "security_overnight_camp",
+    "item": "Security overnight (camp)",
+    "unit_price": 220,
+    "qty": 80,
+    "unit": "per_100_peak_night"
+   },
+   {
+    "id": "fire_ems_standby",
+    "item": "Fire / EMS stand-by",
+    "unit_price": 3500,
+    "qty": 3,
+    "unit": "per_day"
+   },
+   {
+    "id": "radios_command_post",
+    "item": "Radios + command post",
+    "unit_price": 4500,
+    "qty": 1,
+    "unit": "flat"
+   },
+   {
+    "id": "temp_structure_pe",
+    "item": "Temporary structure engineer / PE stamp",
+    "unit_price": 6000,
+    "qty": 1,
+    "unit": "flat"
+   },
+   {
+    "id": "weather_monitoring",
+    "item": "Weather monitoring service",
+    "unit_price": 2500,
+    "qty": 1,
+    "unit": "flat"
+   },
+   {
+    "id": "ground_protection",
+    "item": "Ground protection / pumps / ballast / extra tents",
+    "unit_price": 8000,
+    "qty": 1,
+    "unit": "flat"
+   },
+   {
+    "id": "delay_labor_bank",
+    "item": "Delay labor (4-hour show-hold bank)",
+    "unit_price": 5000,
+    "qty": 1,
+    "unit": "flat"
+   },
+   {
+    "id": "cancellation_reserve",
+    "item": "Cancellation / postponement reserve",
+    "unit_price": 56553.51,
+    "qty": 1,
+    "unit": "pct_of_master_opex"
+   }
+  ]
+ },
+ "lineup_note": "Sample acts and draws are fictional."
+}

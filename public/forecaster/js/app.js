@@ -926,6 +926,7 @@
     const r = BudgetEngine.compute(model, options);
     lastBudget = r;
     window.__ffLastBudget = r; // v1.5: read by js/lineup_talent.js ("Use sim Talent line")
+    window.__ffReadForm = readForm; // v1.6: read by js/event_bible_step.js
     try { document.dispatchEvent(new CustomEvent("ff:recalc", { detail: r })); } catch (e) {}
     renderRfidPanel(r);
     renderSafetyWeatherPanel(r);
@@ -1201,6 +1202,7 @@
     $("#mcP50").textContent = fmtMoney(result.P50);
     $("#mcP90").textContent = fmtMoney(result.P90);
     $("#mcPProfit").textContent = Math.round(result.pProfit * 100) + "%";
+    window.__ffLastMc = { pProfit: result.pProfit, pCover: result.pCover, P10: result.P10, P50: result.P50, P90: result.P90 }; // v1.6 Event Bible
     $("#mcPCover").textContent = Math.round(result.pCover * 100) + "%";
 
     const maxSwing = Math.max(...result.tornado.map((t) => t.swing), 1);
@@ -1508,6 +1510,7 @@
     $("#btnMC").addEventListener("click", runMonteCarlo);
     // Phase 2 ROS gate — Run disabled until Confirm
     if ($("#btnMC")) $("#btnMC").disabled = true;
+    window.__ffGetRos = function () { try { return rosGate && rosGate.isConfirmed() ? rosGate.getConfirmedRos() : []; } catch (e) { return []; } };
     rosGate = RosGate.createController({
       panelId: "rosGatePanel",
       tableBodyId: "rosTableBody",

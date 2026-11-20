@@ -277,6 +277,7 @@
             </div>
             <p class="banner info" id="safetyWeatherAssumption" style="margin-top:0.5rem"></p>
             <p class="footer-note" style="text-align:left;padding:0.25rem 0" id="safetyWeatherDisclaimer"></p>
+            <div id="guidanceSizing"></div>
           </div>
         </details>
 
@@ -457,7 +458,7 @@
       <!-- STEP 7 main note -->
       <section class="card ax-main-panel" data-ax-main="7" id="axMainPack" hidden>
         <h2>7 · Pack</h2>
-        <p>Download poster, blank ops workbooks, and <code>odoo_event_import.csv</code> from the sidebar.</p>
+        <p>Download your filled <b>Event Bible</b> below, or the poster, blank ops workbooks and <code>odoo_event_import.csv</code> from the sidebar.</p>
         <ul style="color:var(--muted);font-size:0.9rem">
           <li>Event: name, date, timezone, venue, organizer, tags, visibility, limit_registrations</li>
           <li>Ticket rows: name, price, sales_start, sales_end, maximum</li>
@@ -465,6 +466,15 @@
           <li>Booth: category, count, price, creates_sponsor</li>
         </ul>
 
+        <div class="create-event" id="eventBibleBox" style="margin-top:0.75rem;border-top:1px solid var(--line, #333);padding-top:0.75rem">
+          <h3 style="margin:0 0 0.4rem">Download your Event Bible</h3>
+          <p class="footer-note" style="text-align:left;padding:0 0 0.4rem">One workbook with 11 planning templates filled from this forecast: Run of Show, Packing List, Transport Master, Production Fulfillment, Site &amp; Crew Handbook, RFID &amp; POS, Talent Worksheet, Artist Marketing, Lineup Announce, Budget &amp; Scenarios and Safety Metrics. Built in your browser; nothing is uploaded.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+            <button type="button" id="btnEventBible" class="primary">Download Event Bible (.xlsx)</button>
+            <button type="button" id="btnLibrary" class="ghost">Template Library →</button>
+          </div>
+          <p id="ebStatus" class="footer-note" style="text-align:left" aria-live="polite"></p>
+        </div>
         <div class="create-event" id="createEventBox" style="margin-top:0.75rem;border-top:1px solid var(--line, #333);padding-top:0.75rem">
           <h3 style="margin:0 0 0.4rem">Create this event</h3>
           <p class="footer-note" style="text-align:left;padding:0 0 0.4rem">Free ticketed event on Patron Journey: GA (and VIP if set) as <em>Pay at Door</em> tickets with your price in the name. Forecast numbers stay private (D1), never in Odoo.</p>
@@ -508,7 +518,11 @@
   <script src="js/event_draft_schema.js"></script>
   <script src="js/event_draft.js"></script>
   <script src="js/create_event.js"></script>
+  <script src="js/guidance_sizing.js"></script>
   <script src="js/app.js"></script>
   <script src="js/lineup_talent.js"></script>
+  <script src="js/vendor/fflate.min.js"></script>
+  <script src="js/event_bible.js"></script>
+  <script src="js/event_bible_step.js"></script>
 </body>
 </html>
